@@ -1,0 +1,385 @@
+---
+title: "my_snippets"
+author: "rccline"
+date: "2/28/2021"
+output: html_document
+---
+
+snippet my_polynomial
+	plot(${1:myxcol}, ${2:myycol}, main="Polynomial Regression", las=1)
+	model1 <- lm(${2:myycol} ~ ${1:myxcol}, data=${3:mydf})
+	summary(model1)
+		Use Residual Plots to check linearity
+	model2 <- lm(${2:myycol} ~ ${1:myxcol} + I(${1:myxcol}^2), data=${3:mydf} )
+	summary(model2)
+		Use "Poly" command for polynomial
+
+	model_poly <- lm(${2:myycol} ~ poly(${1:myxcol}, degree=2, raw=T), data=model)
+	summary(model_poly)
+		Add line
+	lines(smooth.spline(${1:myxcol}, predict(model_poly)), col="blue", lwd=3)
+		Partial F Test to compare models:
+	anova(model1, model_poly)
+		Fit a model with X^3
+	model3 <- lm(${2:myycol} ~ ${1:myxcol} + I(${1:myxcol^2) + I(${1:myxcol}^3), data=${3:mydf})
+	lines(smooth.spline(${1:myxcol}, predict(model3)), col="green", lwd=3, lty=3)
+	legend(46, 15, legend = c("model1: linear", "model2: poly x^2", "model3: poly x^3"), col=c("red", "blue", "green"), lty=c(1,1,3), lwd=3, bty="n", cex=0.9)
+
+snippet my_show_text
+	library(showtext) 
+	font_add_google("Montserrat")
+	# font_add_google("Roboto Mono", "Roboto Mono")
+	# Automatically use showtext to render text
+	showtext_auto()
+
+snippet my_date_format
+	mutate(Dated= format(LseDate, "%B %d, %Y"))  
+	YAML date: "Printed `r format(Sys.time(), '%a, %B %d, %Y')`"
+	
+snippet my_page_break
+	<div style="page-break-after: always;"></div>
+	
+snippet my_underscores_to_spaces  
+	names(sample_data_refi) <- gsub("_", " ", names(sample_data_refi))
+
+snippet my_randomNos
+	set.seed(2020)
+	runif(1,0,10) # Random Nos No of digits, interval between 0 and 10 (n, min, max) 
+	rnorm(n, mean= 0, sd = 1)
+	
+	
+snippet my_recode
+	${1:my_df$var1} $ ${2:my_var1}  <- recode(${1:my_df} $ ${2:my_var1},
+		"PA" = "PR",
+		"SI" = "PR")
+
+snippet my_replace
+	my_df$dt_pa2 = my_df$dt_pa  
+	my_df
+	my_df$dt_pa2[is.na(my_df$dt_pa2)] = "2020-10-4"
+	summary(my_df)
+
+snippet my_case_when
+	${1:my_df} %>% 
+		mutate(producer = case_when(is.na(dt_prod) ~  0,
+																!is.na(dt_prod) ~ 1))
+																
+snippet my_NA's
+${1:my_df} %>% 
+	select(${2:my_var1}) %>% 
+	summarise(NA_per_row = sum(is.na(.)), Not_NA= sum(!is.na(.)))
+	
+snippet  my_NA_impute
+		"https://datascienceplus.com/imputing-missing-data-with-r-mice-package/"
+		impute <- mice(${1:my_df}[, 2:9], m=5, seed = 123)
+		print(impute)
+	
+snippet my_NA_pct
+		library(mice)
+		library(VIM)
+		"https://datascienceplus.com/imputing-missing-data-with-r-mice-package/"
+		aggr_plot <- aggr(${1:my_df}, col=c("navyblue","red"), numbers=TRUE, sortVars=TRUE,
+		labels=names(${1:my_df}), cex.axis=0.7, gap=3, ylab=c("Histogram of missing data","Pattern"))
+		md.pattern(${1:my_df})
+		${1:my_df}$imp$my_var1
+		md.pairs(${1:my_df})
+		marginplot(${$:my_df[ c("${2:my_var1}","${3:my_var2}")])
+		densityplot(${1:my_df})
+		pctNA <- function(x) {sum(is.na(x))/length(x)*100}
+		apply(${1:my_df}, 2, pctNA)
+		
+
+snippet my_decade
+	decade = round(year/10)*10)
+	decade = year %/% 10 * 10
+
+
+snippet my_custom_barchart	#
+	library(ggplot2)
+	library(scales)
+	ggplot(${1:my_df}, aes(x=${2:myxcol}, y=${3:myycol})) + 
+	geom_col(color = "black", fill="#0072B2") +
+	theme_minimal() +
+	theme(panel.border = element_blank(), panel.grid.major = element_blank(),
+				panel.grid.minor = element_blank(), axis.line = element_line(colour = "gray"),
+				plot.title = element_text(hjust = 0.5),
+				plot.subtitle = element_text(hjust = 0.5)
+	) +
+	scale_y_continuous(label = comma) + 
+	xlab("") +
+	ylab("") +
+	geom_text(aes(label=scales::dollar(${2:myycol})), vjust=1.5, colour="white", position=position_dodge(.9), size=5) +
+	ggtitle("${4:mytitle}", subtitle = "${5:mysubtitle}") 
+	
+snippet my_boxplot_outliers
+	dat <- ggplot2::${1:mydf}
+	summary(${2:myvar})
+		ggplot(${1:mydf}) +
+		aes(x=${2:myvar})+
+		geom_histogram(bins = 30L, fill = "#0c4c8a")+  # Bins ~ Square root of the no of obs.
+		theme_minimal()    
+	ggplot(${1:mydf})+
+		aes(x="", y= ${2:myxvar})+
+		geom_boxplot(fill="#0c4c8a")+
+		theme_minimal()
+	Extract_Outliers
+		out <- boxplot.stats(${2:myvar})$out
+	Extract_Row_nos
+		out_ind <- which(${2:myvar} %in% c(out))
+	boxplot(${2:myvar},
+		ylab="${3:myvarname},
+		main = "Boxplot of highway miles per gallon")
+		mtext(paste("Outliers: ", paste(out, collapse = ",")), side=1)
+	All observations that lie outside of 2.5 and 97.5 percentile are potential outliers.
+	lower_bound <- quantile(${2:myvar}, 0.025)
+	upper_bound <- quantile(${2:myvar}, 0.975)
+	outlier_ind <- which(${2:myvar} < lower_bound | ${2:myvar} > upper_bound)  
+	
+snippet my_ggplot_line 
+	ggplot2::${1:mydf} %>%
+		group_by(year = 10 * (year %/% 10)) %>% 
+		summarise(died= mean(died),
+		success = mean(success))  %>% 
+			pivot_longer(died:success, names_to = "outcome", values_to = "percent") %>% 
+		ggplot(aes(year, percent, color= outcome)) +
+		geom_line(alpha=0.7, size=1.5) +
+		scale_y_continuous(labels = scales::percent_format())
+
+snippet my_geom_bar_dodge
+	library(babynames)
+	ggplot(babynames, aes(year %/% 10*10, fill=sex)) +
+	geom_bar(
+		stat="count",
+		position="dodge"
+	)
+
+snippet my_corr
+		library(tidyverse)
+		dat <- ${1:mydf} %>%
+		select(${2:myvar1}, ${3:myvar2})
+			# Pearson correlation between 2 variables
+			# quantitative continuous variables
+	cor(${2:myvar1}, ${3:myvar2})
+			# correlation for all variables
+	round(cor(${1:mydf}),
+	digits = 2 # rounded to 2 decimals
+	)
+		# Pearson product-moment correlation test of two vars
+		# alternative hypothesis: true correlation is not equal to 0
+		test <- cor.test(${2:myvar1}, ${3:myvar2})
+		test
+			# improved correlation matrix
+	library(corrplot)
+	corrplot(cor(${1:mydf}),
+		method = "number",
+		type = "upper" # show only upper side
+	)
+	
+snippet my_corr_p_test
+	# correlation p-tests for whole dataset
+	library(Hmisc)
+	res <- rcorr(as.matrix(${1:mydf})) # rcorr() accepts matrices only
+		# display p-values (rounded to 3 decimals)
+		# round(res$P, 3)   # var= res dollar  sign P
+		
+snippet my_correllogram
+	library(correlation)
+	correlation::correlation(${1:mydf},
+		include_factors = TRUE, method = "auto"
+	)
+		#corrplot_function
+	corrplot2 <- function(data,
+		method = "pearson",
+		sig.level = 0.05,
+		order = "original",
+		diag = FALSE,
+		type = "upper",
+		tl.srt = 90,
+		number.font = 1,
+		number.cex = 1,
+		mar = c(0, 0, 0, 0)) {
+	library(corrplot)
+	data_incomplete <- data
+	data <- data[complete.cases(data), ]
+	mat <- cor(data, method = method)
+	cor.mtest <- function(mat, method) {
+		mat <- as.matrix(mat)
+		n <- ncol(mat)
+		p.mat <- matrix(NA, n, n)
+		diag(p.mat) <- 0
+		for (i in 1:(n - 1)) {
+			for (j in (i + 1):n) {
+		tmp <- cor.test(mat[, i], mat[, j], method = method)
+		p.mat[i, j] <- p.mat[j, i] <- tmp$p.value
+		}
+		}
+		colnames(p.mat) <- rownames(p.mat) <- colnames(mat)
+		p.mat
+		}
+	p.mat <- cor.mtest(data, method = method)
+	col <- colorRampPalette(c("#BB4444", "#EE9988", "#FFFFFF", "#77AADD", "#4477AA"))
+	corrplot(mat,
+		method = "color", col = col(200), number.font = number.font,
+		mar = mar, number.cex = number.cex,
+			type = type, order = order,
+					addCoef.col = "black", # add correlation coefficient
+					tl.col = "black", tl.srt = tl.srt, # rotation of text labels
+			# combine with significance level
+		p.mat = p.mat, sig.level = sig.level, insig = "blank",
+			# hide correlation coefficiens on the diagonal
+			diag = diag
+		)
+	}
+			# Corrplot2
+		corrplot2(
+	data = ${1:mydf},
+	method = "pearson",
+	sig.level = 0.05,
+	order = "original",
+	diag = FALSE,
+	type = "upper",
+	tl.srt = 75
+	)
+
+
+snippet my_slice
+	${1:mydf} %>% slice_sample(n=5)
+	${1:mydf} %>% slice_min(${2:myvar}, prop=0.25)
+	${1:mydf} %>% slice_max(${2:myvar}, n=5)
+
+snippet my_externalR
+	```{r setup, include=FALSE}
+	knitr::opts_chunk$set(echo=FALSE, 
+		warning=FALSE,
+		message=FALSE,
+		cache = FALSE,
+		include = TRUE,
+		# results = 'hide',
+		error = TRUE)
+	```
+	```{r, include=FALSE, cache=FALSE}
+			knitr::read_chunk('externalR.R')
+	```
+	```{r adelie-penguins}
+	```
+	## ---- adelie-penguins
+		adelie <- penguins %>%
+		filter(species=="Adelie", !is.na(body_mass_g))
+
+
+snippet my_child
+	```{r, echo=FALSE, warning=FALSE,message=FALSE, cache = FALSE, include = TRUE}
+		library(tidyverse)
+		library(palmerpenguins)
+		# res <- knitr::knit_child('adelie-report.Rmd', quiet = FALSE)
+		# cat(res, sep = '\n')
+	```
+	# child-chunk
+	```{r test-main, child = 'adelie-report.Rmd', echo=FALSE} 
+			# https://yihui.org/knitr/demo/child/  
+	```  
+	
+snippet my_case_when  
+```{r,  echo=FALSE, warning=FALSE,message=FALSE, cache = FALSE, include = TRUE}
+	my_df %>%
+	mutate(quarter = case_when(
+		Month %in% c("Jan", "Feb", "Mar") ~ "Q1",
+		Month %in% c("Apr", "May", "Jun") ~ "Q2",
+		Month %in% c("Jul", "Aug", "Sep") ~ "Q3",
+		Month %in% c("Oct", "Nov", "Dec") ~ "Q4",
+		TRUE ~ "NA"
+		))
+```
+snippet my_replace_values
+		${1:mydf}$	${2:my_var}[	${1:mydf}$	${2:my_var}=="	${3:my_value_old}"] <-"	${4:my_value_new}"
+			${1:mydf}$	${2:my_var}[	${1:mydf}$	${2:my_var} %in% c("${3:my_value_old}", "${4:my_value_old2}"] <-"	${5:my_value_new}"
+
+
+snippet my_annotate_vline
+	ggplot(data=${1:mydf}, aes(x=${2:myxcol}))+
+	geom_histogram(fill="skyblue", alpha=0.5, binwidth = 0.25) +
+	ggtitle("Count of Expiring Sections: Years to Expiration for 2,328 Section Prospect") +
+	geom_vline(aes(xintercept = median(${2:myxcol})), col="red", size=1) +
+	geom_vline(aes(xintercept = mean(${2:myxcol})), col="blue", size=1) +
+	theme_minimal() +
+	annotate("text", x = 4, y = 400,label= "Red = Median") +
+	annotate("text", x = 4, y = 500,label= "Blue = Mean")  
+	
+snippet my_workbook  
+	library(openxlsx)
+	wb <- createWorkbook()
+	addWorksheet(wb, "Sheet1")
+	writeData(wb,"Sheet1", ${1:mydf})
+	saveWorkbook(wb, "./data/myworkbook.xlsx", overwrite=TRUE) 
+	
+snippet my_kniter 
+```{r setup, include=FALSE, echo=FALSE }
+	knitr::opts_chunk$set( 
+	echo = FALSE,
+	message = FALSE,
+	warning = FALSE) 
+	options(scipen=999)
+	if(!require("pacman")){
+		install.packages("pacman")
+	}
+	pacman::p_load(DT, dplyr, ggplot2, tmap, scales, leaflet)	
+```
+
+
+snippet my_citation_yaml
+---
+title: "What is R?"
+author: 
+output:
+	html_document:
+	df_print: paged
+	pdf_document: default
+bibliography: "../MyLibrary.bib"
+Link-citation: true
+
+---
+
+
+snippet my_round
+	${1:mydf} %>%
+		mutate_at(vars(c(${2:myvar1},${3:myvar2}, ${4:myvar3}, ${5:myvar4})), round, 2)  
+		
+snippet my_gttable
+library(gt)
+library(tidyverse)
+library(glue)
+	gt_tbl <- gt_tbl %>%
+		tab_header(
+		title = md("**Summary of Landman Acquisitions**"),
+		subtitle = md("*RoyAc = Sum of NetAc * NRI*")
+	) %>%
+		data_color(
+		columns = vars(Avg_Royalty),
+		colors = scales::col_numeric(
+			palette = c(
+			"lightgreen", "red"),
+			domain = c(NULL))
+	)
+	# Show the gt Table
+	gt_tbl
+	
+snippet my_treemap
+	library(treemapify)
+	ggplot(df_roy, aes(area = TotalRoyAc,
+					fill = initials,
+					label = TotalRoyAc,
+					subgroup = initials)) +
+		geom_treemap() +
+		geom_treemap_subgroup_border() +
+		geom_treemap_subgroup_text(place = "centre",
+								grow = F,
+								alpha = 0.5,
+								colour = "black",
+								fontface = "italic",
+								min.size = 0) +
+		geom_treemap_text(colour = "white", place = "topleft", reflow = T) +
+				labs(y = " ",
+				x = NULL,
+				title = "Who is Contributing the Greatest Number of Royalty Acres?",
+				subtitle = "Royalty Acres = Sum of Roy Acres * NRI")
+
