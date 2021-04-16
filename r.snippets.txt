@@ -1,9 +1,3 @@
----
-title: "my_snippets"
-author: "rccline"
-date: "2/28/2021"
-output: html_document
----
 
 snippet my_polynomial
 	plot(${1:myxcol}, ${2:myycol}, main="Polynomial Regression", las=1)
@@ -25,12 +19,173 @@ snippet my_polynomial
 	lines(smooth.spline(${1:myxcol}, predict(model3)), col="green", lwd=3, lty=3)
 	legend(46, 15, legend = c("model1: linear", "model2: poly x^2", "model3: poly x^3"), col=c("red", "blue", "green"), lty=c(1,1,3), lwd=3, bty="n", cex=0.9)
 
+snippet my_dateDiff
+	library(readxl)
+	data <- read_excel("myexcel.xlsx")
+	data$diff_month <- interval(data$date1, data$date2) %/% months(1)
+
+snippet my_nest 
+	pippo <- iris %>% 
+		nest(data = !Species) %>%  # creates a tibble with all vars except Species 
+		mutate(nrow = map(data, ~nrow(.x))) %>%  # Adds a column 'nrow'
+		mutate(mylm = map(data, ~lm(Sepal.Width ~ Sepal.Length, data = .x))) %>% # creates var mylm
+		mutate(out = map(mylm, ~tidy(.x))) %>%
+		unnest(out) 
+		pippo
+		plot(pippo$mylm[[1]]) # plots first lm
+
+snippet my_nest_pivoted
+	iris %>% 
+	pivot_longer(!(Species), names_to = "mynames", values_to = "myvalues") %>% 
+	nest(data = !mynames)  
+	
+snippet my_scale_and_center
+	mtcars %>% 
+		group_by(cyl) %>% 
+		mutate(gpcent = scale(mpg, scale = FALSE)) %>% 
+		mutate(gpscale = scale(mpg, scale=TRUE))
+	data_scale2 <- mtcars %>%           # Applying functions of dplyr
+		mutate_at(c("mpg", "cyl"), ~(scale(.) %>% as.vector))
+
+snippet my_across  
+	iris %>% 
+		mutate(across(where(~is.numeric(.x)), ~log10(.x), .names = "log_{.col}") )   
+
+snippet my_accross_newcol
+	iris_mean_dt <- iris %>% 
+		data.table(.) %>% 
+		.[, list(myavg = mean(Sepal.Length)), by=Species]  
+	newcol
+	iris_mean_dt_newcol <- iris %>% 
+		data.table(.) %>% 
+		.[,myavg := mean(Sepal.Length), by=Species]
+
+
+
+snippet my_validation
+	validation_approach <- function(dataset, proportion) {
+	# prepare the subsets 
+	n = nrow(ch4) ## sample size
+	n_training = round(0.8*n,0)
+	n_test = n - n_training
+		training_records <- sample(n,n_training)
+		training_set <- ch4[training_records,]
+		test_set <- ch4[-training_records,] 
+	## fit the model 
+		fit <- lm(Age ~ ., data=training_set)
+	## evaluate the model 
+		predictions <- predict(fit, newdata = test_set[,-1], interval="none", type = "response", na.action=na.pass)
+	# eleminted code line from above cbind.data.frame("test_age"=test_set[,1], "predictions"=round(predictions,2)) 
+		r_pearson = cor(test_set$Age,predictions)
+		r_spearman = cor(test_set$Age,predictions, method = "spearman")
+		mse = mean((test_set$Age-predictions)^2)
+		rmse = sqrt(mse)
+		nrmse = sqrt(mse)/mean(test_set$Age)
+	res <- data.frame("metric"=c("MSE","RMSE","NRMSE","r pearson","r spearman"),
+				"value"=c(mse,rmse,nrmse,r_pearson,r_spearman)) 
+		return(res)
+	}
+
+
 snippet my_show_text
 	library(showtext) 
 	font_add_google("Montserrat")
 	# font_add_google("Roboto Mono", "Roboto Mono")
 	# Automatically use showtext to render text
-	showtext_auto()
+	showtext_auto()    
+	
+snippet my_colorBrewer
+	library(RColorBrewer)
+	colorbrewer2.org
+	display.brewer.all()
+	display.brewer.all(type="div")
+	display.brewer.all(type="seq")
+	display.brewer.all(type="qual")
+	brewer.pal(n=8, name = "Blues")
+	display.brewer.pal(n=8, name="Set2")
+	display.brewer.pal(n=3, name="Spectral")
+	### ?terrain.colors()  ### Multi-color
+	
+snippet my_spplot 
+	?sp::spplot
+	spplot(countries, zcol = "area")
+	spplot(countries, zcol = "startswithB")
+	plot(cities, col = "red", add = TRUE) 
+	
+snippet my_spTransform
+	species_coords <- read.csv("./data/species_coords/species_coords.csv", stringsAsFactors = TRUE)  # '../' goes up one level (out of the current folder), and then into the next folders [don't forget to do what it says under "FIRST, DO THIS" at the beginning of this script!]
+	head(species_coords)
+	unique(species_coords$country)
+	species_points <- species_coords
+	coordinates(species_points) <- ~ longitude + latitude
+	crs(species_points) <- crs(countries)
+	species_points_laea <- spTransform(species_points, CRS = "+proj=laea")
+	plot(species_points_laea)
+	
+snippet my_choroLayer_Plot
+	?choroLayer
+	head(countries)
+	choroLayer(spdf = countries, var = "area")        #SpatialPolygonsDataFrame
+	choroLayer(spdf = countries, var = "area_calc")
+	choroLayer(spdf = countries, var = "pop2005")  # error: var not numeric
+	countries$pop2005  # column not originally coded as numeric but rather as factor, with 'levels'
+	# convert to numeric:  
+	
+snippet my_spdf_extents_plot
+	plot(usa, xlim=c(-100, -94.0), ylim=c(27, 50), col="orange")
+	
+snippet my_round  
+	sprintf(5.5, fmt = '%#.4f') 
+	
+snippet my_shinyDates
+	server <- function(input, output) {
+		output$mytable = DT::renderDataTable(
+		datatable(leasesdf, 
+			caption = htmltools::tags$caption(
+								style = 'caption-side: bottom; text-align: left;',
+								'Table 1: ', htmltools::em('Lease Series 105 covering 738.43 acres'))
+								) %>% 
+								formatRound(8,2) %>% 
+								formatRound(2,2) %>% 
+								formatCurrency(9, digits = 2) %>% 
+								formatDate(3:5, method = "toLocaleDateString", params = NULL)
+	
+snippet my_mapFunction_Turn_Logical_2_0
+	map_lgl(starwars$starships, ~ length(.) > 0)
+	map_int(starwars$starships, ~ length(.) > 0)
+	
+snippet my_colorDF_summary  
+	starwars %>% summary_colorDF
+	summary_colorDF(mtcars_cyl, numformat="g", width=90)
+	
+snippet my_duplicates  
+	wiid3 <- wiid2 %>% 
+	filter(duplicated(country) == FALSE)  
+	
+snippet my_duplicates_remove  
+	df[!duplicated(df[ , c("id","gender")]),]
+
+snippet my_ODBC  
+	path <- "D:D_Documents/myaccdb"  
+	ch <- odbcDriverConnect("Driver=Microsoft Access Driver (*.mdb, *.accdb)}; DBQ=path")
+	
+snippet my_forLoop_plot
+	 par(mfrow = c(3, 2))
+	for (i in 1:ncol(longley)) {
+	plot(longley[,i])
+	}  
+	
+snippet my_forcats
+	library(tidyverse)
+	library(forcats)
+	penguins %>%
+		group_by(species) %>%
+		summarize(mean_weight = mean(body_mass_g, na.rm=TRUE)) %>%
+		ungroup() %>%
+		mutate(species = fct_reorder(species, desc(mean_weight))) %>%
+		ggplot(aes(x=species,
+							y=mean_weight)) +
+		geom_col()  
 
 snippet my_date_format
 	mutate(Dated= format(LseDate, "%B %d, %Y"))  
@@ -39,6 +194,12 @@ snippet my_date_format
 snippet my_page_break
 	<div style="page-break-after: always;"></div>
 	
+snippet my_na's
+	summarize_all(~sum(is.na(.x))) 
+	mpg[is.na(mpg)] <- 0  
+	vec_3 <- replace(vec_3, is.na(vec_3), 0)
+	
+
 snippet my_underscores_to_spaces  
 	names(sample_data_refi) <- gsub("_", " ", names(sample_data_refi))
 
@@ -382,4 +543,117 @@ snippet my_treemap
 				x = NULL,
 				title = "Who is Contributing the Greatest Number of Royalty Acres?",
 				subtitle = "Royalty Acres = Sum of Roy Acres * NRI")
+
+
+snippet lib
+	library(${1:package})
+
+snippet req
+	require(${1:package})
+
+snippet src
+	source("${1:file.R}")
+
+snippet ret
+	return(${1:code})
+
+snippet mat
+	matrix(${1:data}, nrow = ${2:rows}, ncol = ${3:cols})
+
+snippet sg
+	setGeneric("${1:generic}", function(${2:x, ...}) {
+		standardGeneric("${1:generic}")
+	})
+
+snippet sm
+	setMethod("${1:generic}", ${2:class}, function(${2:x, ...}) {
+		${0}
+	})
+
+snippet sc
+	setClass("${1:Class}", slots = c(${2:name = "type"}))
+
+snippet if
+	if (${1:condition}) {
+		${0}
+	}
+
+snippet el
+	else {
+		${0}
+	}
+
+snippet ei
+	else if (${1:condition}) {
+		${0}
+	}
+
+snippet fun
+	${1:name} <- function(${2:variables}) {
+		${0}
+	}
+
+snippet for
+	for (${1:variable} in ${2:vector}) {
+		${0}
+	}
+
+snippet while
+	while (${1:condition}) {
+		${0}
+	}
+
+snippet switch
+	switch (${1:object},
+		${2:case} = ${3:action}
+	)
+
+snippet apply
+	apply(${1:array}, ${2:margin}, ${3:...})
+
+snippet lapply
+	lapply(${1:list}, ${2:function})
+
+snippet sapply
+	sapply(${1:list}, ${2:function})
+
+snippet mapply
+	mapply(${1:function}, ${2:...})
+
+snippet tapply
+	tapply(${1:vector}, ${2:index}, ${3:function})
+
+snippet vapply
+	vapply(${1:list}, ${2:function}, FUN.VALUE = ${3:type}, ${4:...})
+
+snippet rapply
+	rapply(${1:list}, ${2:function})
+
+snippet ts
+	`r paste("#", date(), "------------------------------\n")`
+
+snippet shinyapp
+	library(shiny)
+	
+	ui <- fluidPage(
+	  ${0}
+	)
+	
+	server <- function(input, output, session) {
+	  
+	}
+	
+	shinyApp(ui, server)
+
+snippet shinymod
+	${1:name}_UI <- function(id) {
+	  ns <- NS(id)
+	  tagList(
+		${0}
+	  )
+	}
+	
+	${1:name} <- function(input, output, session) {
+	  
+	}
 
