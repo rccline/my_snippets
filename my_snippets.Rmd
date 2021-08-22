@@ -6,6 +6,79 @@ output: html_document
 ---
 
 
+snippet my_setwd
+	library("rstudioapi") 
+	setwd(dirname(getActiveDocumentContext()$path))
+	mypath <- getwd()
+	source(paste(mypath, "bayes_set_seed.R", sep="/")) 
+	
+snippet my_libraries
+	library(DataExplorer)
+	library(skimr)
+	library(tidyverse)
+	library(stringr)
+	library(readr)  
+	library(janitor)
+	library(tidyr)  
+	library(pillar)  # is.ambiguous_string()  
+	library(unheadr)  # from luisDVA  
+	
+snippet my_parsed_nos 
+	parsed <- read_csv("F:/D_Documents/GitHub-DasRotRad/regex_rfortherest/data/MPAS-mine.csv") %>% 
+	mash_colnames(2) %>% 
+	clean_names() %>% 
+	select(protected_area_name, matches("^extent")) %>% 
+	remove_empty("rows") %>% 
+	mutate(across(matches("^extent"), parse_number))
+	
+snippet my_split_file
+	library(purrr, gapminder)
+	gapminder %>% 
+		split(.$country) %>% 
+		map(select, country, continent, year, lifeExp, pop, gdpPercap ) %>% 
+		iwalk(~ write_csv(.x, file.path("data_gap", paste0(.y, ".csv"))))
+		OR.. iwalk(~ write_csv(.x, paste0(.y, ".csv")))
+
+snippet my_clean_names
+	MPAs <- read_csv("./data/MPAS-mine.csv") %>% 
+	clean_names() %>% 
+	mutate(country = to_title_case(country)) %>% 
+	count(country) 
+	MPAs
+
+snippet my_math  
+	https://www.codecogs.com/latex/eqneditor.php?lang=en-en
+	
+snippet my_external_RMDfigures 
+	{r, fig.cap= "Figure 1. Illustration of penguin species", out.width='60%', fig.align = 'center', echo = FALSE}
+	knitr::include_graphics("https://allisonhorst.github.io/palmerpenguins/reference/figures/lter_penguins.png")
+
+snippet my_header_in_blue
+	{css, echo=FALSE}
+	/*header in blue*/
+	h1, h2, h3 {
+	color: #0A7FB2
+	}
+
+snippet myBinLik
+	BinLik <- function(theta){
+		choose(10,8)*theta^8*(1-theta)*2
+	}
+	integrate(BinLik, lower=0, upper=1)$value
+
+snippet my_ggplotRegression
+	library(tidyverse)
+	ggplotRegression <- function (fit) {
+		require(ggplot2)
+		ggplot(fit$model, aes_string(x = names(fit$model)[2], y = names(fit$model)[1])) + 
+		geom_point() +
+		stat_smooth(method = "lm", col = "red") +
+		labs(title = paste("Adj R2 = ",signif(summary(fit)$adj.r.squared, 5),
+										"Intercept =",signif(fit$coef[[1]],5 ),
+										" Slope =",signif(fit$coef[[2]], 5),
+										" P =",signif(summary(fit)$coef[2,4], 5)))
+} 
+
 snippet my_polynomial
 	plot(${1:myxcol}, ${2:myycol}, main="Polynomial Regression", las=1)
 	model1 <- lm(${2:myycol} ~ ${1:myxcol}, data=${3:mydf})
@@ -25,6 +98,30 @@ snippet my_polynomial
 	model3 <- lm(${2:myycol} ~ ${1:myxcol} + I(${1:myxcol^2) + I(${1:myxcol}^3), data=${3:mydf})
 	lines(smooth.spline(${1:myxcol}, predict(model3)), col="green", lwd=3, lty=3)
 	legend(46, 15, legend = c("model1: linear", "model2: poly x^2", "model3: poly x^3"), col=c("red", "blue", "green"), lty=c(1,1,3), lwd=3, bty="n", cex=0.9)
+
+snippet my_name_index_column
+	mtcars <- rownames_to_column(mtcars, var = "model")
+
+snippet my_access_db
+	library(RODBC)
+	MDBPATH <- "D:/D_Documents/_CheyenneCounty/NORSTAR/S Johnson Database/GTLS_SoJohnson Ver 1.0.accdb"
+	con <- odbcConnectAccess2007(MDBPATH)
+	lessors <- sqlFetch(con, 'tblLessors')
+	leases <- sqlFetch(con, 'tblLeases')
+	InstTypes <- sqlFetch(con, 'tblInstrTypes')
+	LseTracts <- sqlFetch(con, 'tblLseTracts')
+	mailMerge <- sqlFetch(con, '_MailMerge')
+	odbcClose(con)  
+	
+snippet my_currency
+	library(formattable)
+	mailmerge$BonusPmt <- currency(mailmerge$BonusPmt, digits = 2L)  
+	
+snippet my_external_file
+	```{r, code=xfun::read_utf8('your-script.R')}
+	``` 
+	```{r, code=read_files(c('one.R', 'two.R'))}
+	```
 
 snippet my_dateDiff
 	library(readxl)
@@ -142,7 +239,24 @@ snippet my_spdf_extents_plot
 	plot(usa, xlim=c(-100, -94.0), ylim=c(27, 50), col="orange")
 	
 snippet my_round  
-	sprintf(5.5, fmt = '%#.4f') 
+	sprintf(5.5, fmt = '%#.4f')  
+	
+snippet my_inline_hook
+	# https://www.youtube.com/watch?v=a2MedFEQTeA 
+	knit_hook$set(inline=inline_hook)
+	inline_hook <- function(x){
+		if(is.numeric(x))
+		{
+			if(abs(x - round(x) < .Machine$double.eps)) {
+			# Treat as integer
+			formatted <- format(x, digits=0, big.mark = ",")
+		} else {
+		# Treat as Floating point number
+			formatted <- format(x, digits=2, nsmall=2, big.mark = ",")
+		} 
+		} else { formatted <- x
+			}
+		}
 	
 snippet my_shinyDates
 	server <- function(input, output) {
@@ -233,7 +347,8 @@ snippet my_case_when
 																!is.na(dt_prod) ~ 1))
 																
 snippet my_NA's
-${1:my_df} %>% 
+	wells1$PR <- ifelse(is.na(wells1$Dt_Prod), 0,1)
+	${1:my_df} %>% 
 	select(${2:my_var1}) %>% 
 	summarise(NA_per_row = sum(is.na(.)), Not_NA= sum(!is.na(.)))
 	
@@ -663,4 +778,3 @@ snippet shinymod
 	${1:name} <- function(input, output, session) {
 	  
 	}
-
