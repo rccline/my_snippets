@@ -1,0 +1,11 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+# Ignore file
+/_snippets.Rproj
+/MIT)License.html
+/README.html
+/snippets_machelis.R
+/r.stnippets
+/r.snippets.txt
