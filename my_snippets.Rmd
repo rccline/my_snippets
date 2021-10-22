@@ -10,7 +10,70 @@ snippet my_setwd
 	library("rstudioapi") 
 	setwd(dirname(getActiveDocumentContext()$path))
 	mypath <- getwd()
-	source(paste(mypath, "bayes_set_seed.R", sep="/")) 
+	source(paste(mypath, "bayes_set_seed.R", sep="/"))  
+	
+snippet my_pivot_long  
+	mtcars_long <- pivot_longer(mtcars,
+		cols = !Model:mpg,
+		names_to = "desired name for category column",
+		values_to = "desired name for values column")  
+		
+snippet my_pivot_long2
+	pivot_longer(${1:mydf}},
+		cols=${2:columns to pivot long},
+		names_to = "${3:desired name for category column}",
+		values_to = "${4:desired name for value column}"
+		) 
+		
+snippet my_pivot_wider
+	pivot_wider(us_rent_income,
+		# id_cols = optional vector of unaffected cols,
+		names_from = c(variable),
+		values_from = c(estimate, moe),
+		names_sep = "_"
+	)  
+	
+snippet my_pivot_wider2  
+	pivot_wider(${1:mydf},
+		#id_cols = ${2:optional vector of unaffected cols},
+		names_from = c(${3:category columns to pivot wide}),
+		values_from = c(${4:value columns that hold data for ea category col}),
+		names_sep= "_")
+		
+snippet my_params_{gt}_titles
+	options(digits = 3)
+	seedl %>% 
+	filter(area==as.numeric(params$area)) %>% 
+	gt(seedl) %>% 
+		tab_header(
+		title = md(glue("Area sampled is {params$area} *m<sup>2</sup>*")),
+		subtitle = "The top ten largest are presented"
+		) 
+		
+snippet my_inline_hook
+	library(knitr)
+	inline_hook <- function(x){
+	#  paste0("**", x, "**")
+		if(is.numeric(x)){
+		formatted <- format(x, digits=2, nsmall=2)
+		} else{
+		formatted <- x
+		}
+	}
+	knit_hooks$set(inline=inline_hook) 
+	
+snippet my_inline_hook_scientific
+	library(knitr)
+	inline_hook <- function(x){
+	#  paste0("**", x, "**")
+		if(is.numeric(x)){
+		formatted <- formatC(x, format="e", digits=2) #use formatC
+		} else{
+		formatted <- x
+		}
+		}
+
+knit_hooks$set(inline=inline_hook)
 	
 snippet my_libraries
 	library(DataExplorer)
@@ -23,6 +86,14 @@ snippet my_libraries
 	library(pillar)  # is.ambiguous_string()  
 	library(unheadr)  # from luisDVA  
 	
+snippet my_postgres_connect
+	library(RODBC)
+	library(DBI)
+	library(odbc) 
+	con <- dbConnect(odbc::odbc(), "PostgreSQL35W") 
+	tracts <- dbGetQuery(con, 'SELECT * FROM public."tblLseTracts";')
+	odbcCloseAll()
+
 snippet my_parsed_nos 
 	parsed <- read_csv("F:/D_Documents/GitHub-DasRotRad/regex_rfortherest/data/MPAS-mine.csv") %>% 
 	mash_colnames(2) %>% 
@@ -778,3 +849,4 @@ snippet shinymod
 	${1:name} <- function(input, output, session) {
 	  
 	}
+
