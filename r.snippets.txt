@@ -1,3 +1,576 @@
+snippet my_quarto_yaml
+title: "Mapview - Density"
+format: html
+editor: visual
+author: "Robert Cline"
+format: html
+editor: visual
+toc: true
+code-fold: true
+execute:
+  message: false
+include: true
+warning: false  
+
+snippet my_quarto_yaml2
+format: 
+  html:
+  code-fold: true
+html-math-method: katex
+pdf:
+  geometry: 
+  - top=30mm
+- left=30mm
+docx: default  
+
+snippet my_rep 
+tg %>% 
+  select(PARCEL_ID, CURRENT_OW) %>% 
+  filter(PARCEL_ID == "170008207") %>% 
+  slice(rep(1:n(), each=3)) 
+mutate(PARCEL_ID = str_replace(PARCEL_ID, "170008207", "170008207M")) %>% 
+  mutate(CURRENT_OW == "FRACIE/Gracie", "John Doe")
+
+snippet my_code_chunk_external_code
+{r, code = readLines("permits-signed.R"), echo=FALSE, comment=NA, message=FALSE}
+{r exit-knitr-true, eval=TRUE}
+knitr::knit_exit()
+
+snippet my_ssns_dplyr
+library(tidyverse)
+dat <- tibble::tribble(
+  ~id,       ~ssn,     ~phone,
+  1L, 123803838L, 5555555555,
+  2L, 324555423L, 8133055022,
+  3L, 525307008L, 1234567777,
+  4L, 726058593L, 9999999999,
+  5L, 926810178L, 9399399393
+) %>% #example data
+  mutate(ssn_format = str_c(str_sub(ssn, 1L, 3L), "-", str_sub(ssn, 4L, 5L), 
+                            "-", str_sub(ssn,6L,9L)), 
+         phone_format = paste0("(", str_sub(phone, 1L, 3L), ") ",
+                               str_sub(phone, 4L, 6L)," ", str_sub(phone, 7L, 10L)))
+
+snippet my_regex_ssns
+library(dplyr)
+require(stringi)
+dat <- tibble::tribble(
+  ~id, ~ssn, ~phone,
+  1L, 123803838L, 5555555555,
+  2L, 324555423L, 8133055022,
+  3L, 525307008L, 1234567777,
+  4L, 726058593L, 9999999999,
+  5L, 926810178L, 9399399393
+) %>%
+  mutate(
+    ssn_format = stri_replace_all_regex(
+      ssn,
+      "^(\\d{3})(\\d{2})(\\d{4})$",
+      "$1-$2-$3"
+    ),
+    phone_format = stri_replace_all_regex(
+      phone,
+      "^(\\d{3})(\\d{3})(\\d{4})$",
+      "($1) $2 $3"
+    )
+  )
+
+
+
+snippet my_css 
+.test h3 {text-align: center;}
+### Exhibit A {.test}
+
+snippet my_compare_df
+dplyr::all_equal()  
+janitor::compare_df_cols(iris, iris)
+janitor::compare_df_cols(iris, iris, return = "mismatch")
+visdat::vis_compare(iris, iris_wrong_class)
+vis_dat()
+vis_miss()
+vis_miss(aoi, cluster = TRUE)
+vis_compare(x, y) 
+
+snippet my_adorn_percentages 
+nhanes %>% 
+  tabyl(age_decade, gender) %>% 
+  adorn_percentages() %>% 
+  adorn_pct_formatting(digits = 0,
+                       rounding = "half up") %>% 
+  kbl(caption = "adorn_percentages") %>% 
+  kable_classic(full_width = F, html_font = "Cambria", position = "left") 
+
+snippet my_gt_table
+gt() %>% 
+  tab_header(
+    title = md("**Permits Sent and Received**"))   %>%
+  fmt_number(
+    data=.,
+    columns = GrossAc,
+    decimals = 2,
+    use_seps = TRUE
+  ) %>% 
+  tab_footnote(
+    footnote = "Percent of total number of permits",
+    locations = cells_column_labels(
+      columns = percent_N
+    )
+  ) %>% 
+  tab_footnote(
+    footnote = "n = number of permits",
+    locations = cells_column_labels(
+      columns = n
+    )
+  )%>% 
+  grand_summary_rows(
+    columns = c(GrossAc, n),
+    fns = list(
+      #  Total = ~sum(.),
+      #  max = ~max(.),
+      Total = ~sum(.)),
+    formatter = fmt_number,
+    use_seps = TRUE
+  ) %>%
+  tab_options(table.align='left')
+
+snippet my_merge_and_sequence
+ID <- c(1,1,1,2,2,3,3,3)
+score <- c(3,7,1,1,2,4,2,9)
+df <- data.frame(ID, score)
+library(tidyverse)
+df1 <- df %>%
+  group_by(ID) %>%
+  summarize(score = sum(score))
+df2 <- df1 %>%
+  mutate(sequence = rep(c(1,2), times = ceiling(nrow(df1)/2))[1:nrow(df1)])
+df3 <- merge(x = df, y = df2, by = "ID", all.x = TRUE)
+
+
+snippet my_regex
+## Remove (Card ##)
+ckall$legal <- str_replace(ckall$legal, " \\s*\\([^\\)]+\\)", "")
+
+snippet my_string_split
+separate(tg_seis0, LEGAL_DESC, into = c("trs", "legal"), sep = "^\\S*\\K\\s+") 
+
+snippet my_duplicates_spatial 
+library(janitor)
+get_dupes(x, PARCEL_ID)
+x1 <- x[!duplicated(x$PARCEL_ID),]
+x2 <- bcmaps::fix_geo_problems(x, tries = 5)
+
+snippet my_image 
+<img src="images/gtlslogo-03.png" style="width:50%;"/>
+  ![My Original image.](images/gtlslogo-03.png){width=300}
+![A little image.](images/gtlslogo-03.png){width=50} 
+
+snippet my_arrow
+read_csv_arrow(here("data/aoi_RZ_updatedSEQUENCE.csv"))
+write_csv_arrow(aoi1, "data/aoi_RZ_updatedSEQUENCE.csv"))
+
+snippet my_mapview 
+library(mapview)
+library(sf)
+franconia %>% 
+  mutate(count = length(st_contains(., breweries)),
+         density = count/st_area(.)) %>% 
+  mapview(zcol = "density", legend = FALSE) 
+
+snippet my_geom_sf
+mintracts %>% 
+  select(acres) %>% 
+  ggplot() + 
+  geom_sf() +
+  theme_minimal() +
+  ggtitle("Huntsman Mineral Tracts")  +
+  scale_x_continuous(breaks = seq(from = -103.04, to = -102.92, by = 0.03))
+
+snippet my_ifelse
+leases0 %>% 
+  filter(!is.na(NetAc)) %>% 
+  filter(!is.na(GrossAc)) %>% 
+  mutate(TotalBonus = if_else(
+    condition = NetAc == 0,
+    true = GrossAc* SeismicBonusPerAc,
+    false = NetAc * SeismicBonusPerAc))
+leases1 <-   leases1 %>% 
+  mutate(TotalBonus = round(TotalBonus, 2))
+
+snippet my_setwd
+library("rstudioapi") 
+setwd(dirname(getActiveDocumentContext()$path))
+mypath <- getwd()
+source(paste(mypath, "bayes_set_seed.R", sep="/")) 
+
+snippet my_boxplot_w_statbars 
+data <- data.frame(
+  values = rnorm(100),
+  groups = letters[1:4])
+head(data)
+ggplot(data, aes(values, group = groups)) +
+  stat_boxplot(geom = "errorbar") +
+  geom_boxplot()
+
+snippet my_baseplot 
+plot(st_geometry(tgseis0)) #, col=alpha("#6d558", 0.3))
+plot(st_geometry(tgpids0), add=TRUE, col = "#b01225")
+
+
+snippet my_graphic_chunk
+```{r echo=FALSE, out.width='25%'}
+knitr::include_graphics(here('img/EuropeanShag.PNG'))
+```  
+
+snippet my_source_script
+source("../scripts/theme.clean.R", local = knitr::knit_global())
+# or sys.source("your-script.R", envir = knitr::knit_global())
+
+snippet my_download_data
+dataset_penguins <- function() {
+  file <- here::here("data/penguins.csv")
+  if (!file.exists(file)) {
+    download_penguins()
+  } 
+  return(read.csv(file))
+}
+# penguins <- read.csv(download_penguins()) # put in separate chunk 
+
+snippet my_downloader_zipped_files 
+library(downloader)
+# Example:  download(url, dest="dataset.zip", mode="wb") 
+download(url='http://www.nogcc.ne.gov/Publications/NE_TWP.zip', dest="NE_TWP.zip", mode="wb") 
+unzip ("NE_TWP.zip", exdir = "./downloaddata")
+# URL2: 
+download(url='http://www.nogcc.ne.gov/Publications/NE_SECTION.zip', dest="NE_SECTION.zip", mode="wb") 
+unzip ("NE_SECTION.zip", exdir = "./downloaddata")
+
+snippet my_tables_summaryJtools 
+library(jtools)
+# https://cran.r-project.org/web/packages/jtools/vignettes/summ.html
+summ(mountain.lm)
+summ(mountain.lm, confint = TRUE, ci.width = 0.5)
+export_summs(mountain.lm)
+plot_summs(mountain.lm)
+plot_summs(mountain.lm, scale=TRUE)
+
+snippet my_download_files
+download_file <- function() {
+  file <- here::here("./data/gt_example.csv")
+  url <- "https://zenodo.org/record/6363516#.YkIoy-fMJaS"
+  if (!file.exists(file)) {
+    download.file(url = url,
+                  destfile = file)
+  }
+}
+myfile <- read.csv()download_file())
+
+snippet my_download_google
+library(googledrive)
+drive_auth()
+gdrive <-drive_find(n_max = 10) 
+gdrive
+drive_download("penguins.csv")
+
+
+snippet my_fetch_accessTables
+dbpath <- "F:/D_Documents/_Pecos_solutions/new_mexico/New_Mexico-AllWells.mdb"
+fetch <- function(x) {
+  ch0<- RODBC::odbcDriverConnect(paste0("Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=",dbpath ))
+  allwells <- RODBC::sqlFetch(ch0, "AllWells")
+  allwells <<- allwells
+  RODBC::odbcClose(ch0)
+}
+fetch(allwells)  
+
+snippet my_access_connect 
+library(odbc)
+library(RODBC)
+unique(odbcListDrivers()[[1]])
+# MDBPATH <-"E:\tallgrass\data\Tallgrass-ver1.0.accdb"
+# MDBPATH <- "D:/D_Documents/_CheyenneCounty/NORSTAR/S Johnson Database/GTLS_SoJohnson Ver 1.0.accdb"
+MDBPATH <- "F:/D_Documents/_Power_BI/Leviathan_PBI/Archive/Leviathan Data - Copy.accdb"
+con <- odbcDriverConnect(paste0("Driver={Microsoft Access Driver (*.mdb, *.accdb)}; DBQ=", MDBPATH,";"))
+leases <- sqlFetch(con, 'tblLeases')
+lessors <- sqlFetch(con, 'tblLessors')
+InstTypes <- sqlFetch(con, 'tblInstrTypes')
+LseTracts <- sqlFetch(con, 'tblLseTracts')
+# mailMerge <- sqlFetch(con, '_MailMerge')
+counties <- sqlFetch(con, 'tblCounties')
+odbcClose(con) 
+
+snippet my_wells 
+dbpath <- "E:/tallgrass/data/NebraskaWellData_Paleozoic_Working.accdb"
+ch0<- RODBC::odbcDriverConnect(paste0("Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=",dbpath ))
+welldata0 <- RODBC::sqlFetch(ch0, "tblNebraskaWellData")
+tops <- RODBC::sqlFetch(ch0, "tblNebraskaWellData_Tops")
+legend <- RODBC::sqlFetch(ch0, "tbl_Legend")
+# welltype <- RODBC::sqlFetch(ch0, "Well_Type")
+statuscode <- RODBC::sqlFetch(ch0, "Well_Status_Codes")
+fmtn <- RODBC::sqlFetch(ch0, "tbl_Fmtn")
+statustype <- RODBC::sqlFetch(ch0, "tbl_Status_Type")
+welltype <- RODBC::sqlFetch(ch0, "Well_Type")
+RODBC::odbcClose(ch0)
+welldata <- welldata0 %>% 
+  janitor::clean_names() %>% 
+  rename(api = api_well_no) %>% 
+  rename(status = wl_status) %>% 
+  rename(twp = wh_twpn) %>% 
+  rename(rng = wh_rng_n) %>% 
+  rename(lat = wh_lat) %>% 
+  rename(lon = wh_long) %>% 
+  rename(sec = wh_sec)
+wells <- welldata %>% 
+  select(api, county, co_name, well_nm, well_typ, status, twp, rng, sec, dt_spud, dt_prod, dt_pa, lease_name, field, lat, lon) %>% 
+  # Add grepl grep-logical 
+  filter(grepl('tallgrass', as.factor(co_name), ignore.case = TRUE)) %>% 
+  filter(well_typ != "SWD") %>% 
+  unite(trs, c(twp, rng, sec), sep = "-")
+
+
+snippet my_pdf_yaml 
+output:
+  pdf_document: default
+html_document: default
+documentclass: article
+classoption: legalpaper
+usepackage: geometry
+#See Template: E/latex-arxiv.Rmd
+
+
+snippet my_sys_date 
+add quote and backtic r format(Sys.time(), '%B %d, %Y')`"  
+	
+snippet my_equation_editor  
+	"https://www.codecogs.com/latex/eqneditor.php"
+
+snippet my_cran
+	https://cran.rstudio.com/web/views/
+	library(dplyr)library(stringr)
+	# download package details ------------------------------------------------
+	p_db <- tools::CRAN_package_db()
+	# select variables of interest -------------------------------------------
+	p_db <- p_db %>% select(Package, Author, Description, Title)
+	devtools::session_info()  
+	
+snippet my_setup_chunk  
+	# date: "`r format(Sys.time(), '%B %d, %Y')`" 
+	{r setup, include=FALSE, warning=FALSE, message=FALSE}  
+	knitr::opts_chunk$set(echo = FALSE)  
+	library(rmarkdown)  
+	suppressPackageStartupMessages({  
+		library(tidyverse)  
+		library(rvest)  
+		library(plotly)  
+		library(kableExtra)  
+		library(knitr)
+	})
+	
+snippet my_kable_table 
+	library(kableExtra)
+	head(trees) %>% 
+	kbl(caption = "trees dataset") %>% 
+	kable_classic(full_width = F, html_font = "Cambria", position = "left") 
+	summary(trees)  %>% 
+		kbl(caption = "trees dataset") %>% 
+		kable_classic(full_width = F, html_font = "Cambria", position = "left")
+
+	
+snippet my_package
+	ls(package:ggstatsplot)  
+	help(package="ggstatsplot")  
+	browseVignettes("ggstatsplot")  
+	lsf.str("package:ggstatsplot")  
+snippet my_table 
+	library(kableExtra)
+	table(titanic$class, titanic$survived) %>% 
+	kbl(caption = "Titanic - Passenger class and survival") %>% 
+	kable_classic(full_width = F, html_font = "Cambria", position = "left")  
+	
+snippet my_binomial_glm  
+	tit.glm <- glm(Survivied ~ Class,
+		data = titanic,
+		family = binomial) 
+	library("modelbased")
+		estimate_means(tit.glm) %>% 
+	kbl(caption = "Titanic - Passenger class and survival probabilities") %>% 
+	kable_classic(full_width = F, html_font = "Cambria", position = "left") 
+	
+snippet my_logit
+	boot::logit(0.7318443)
+	boot::inv.logit(1.004)
+	
+snippet my_mosaic_plot 
+	plot(factor(survived) ~ factor(class), data = titanic)
+	
+snippet my_bayesplot_ppcheck 
+	bayesplot::pp_check(tit.glm)
+	
+snippet my_citation_grateful
+	 	`r grateful::cite_packaes(style = "apa")
+	
+snippet my_stringr 
+	library(stringr)
+	df_pvt2 <- df_pvt %>% 
+	filter(str_detect(string=year, pattern = "x")) %>% 
+	mutate(year=str_replace(year,"x",""))
+	
+snippet my_pivot_long  
+	library(tidyr)
+	mtcars_long <- pivot_longer(mtcars,
+		cols = !Model:mpg,
+		names_to = "desired name for category column",
+		values_to = "desired name for values column")  
+		
+snippet my_pivot_long2  
+	library(tidyr)
+	pivot_longer(${1:mydf}},
+		cols=${2:columns to pivot long},
+		names_to = "${3:desired name for category column}",
+		values_to = "${4:desired name for value column}"
+		) 
+		
+snippet my_pivot_wider  
+	library(tidyr)  
+	pivot_wider(us_rent_income,
+		# id_cols = optional vector of unaffected cols,
+		names_from = c(variable),
+		values_from = c(estimate, moe),
+		names_sep = "_"
+	)  
+	
+snippet my_pivot_wider2  
+	library(tidyr)  
+	pivot_wider(${1:mydf},
+		#id_cols = ${2:optional vector of unaffected cols},
+		names_from = c(${3:category columns to pivot wide}),
+		values_from = c(${4:value columns that hold data for ea category col}),
+		names_sep= "_") 
+		
+snippet my_render  
+	## Compiling Reports from R Scripts 
+	## https://rmarkdown.rstudio.com/articles_report_from_r_script.html
+	rmarkdown::render(here::here("docs_descriptive", "2_frequency_tables.Rmd"))
+
+snippet my_lm_summaryTable  
+	# fitlignite <- lm(co2 ~ MW, data=lignite)
+	sjPlot::tab_model(
+		fitlignite,
+		show.r2 = TRUE,
+		show.icc = FALSE,
+		show.re.var = FALSE,
+		p.style = "scientific",
+		emph.p = TRUE) #, include to save as html
+		# file = "Downloads/temp.html")
+		
+snippet my_params_{gt}_titles
+	options(digits = 3)
+	seedl %>% 
+	filter(area==as.numeric(params$area)) %>% 
+	gt(seedl) %>% 
+		tab_header(
+		title = md(glue("Area sampled is {params$area} *m<sup>2</sup>*")),
+		subtitle = "The top ten largest are presented"
+		) 
+		
+snippet my_inline_hook
+	library(knitr)
+	inline_hook <- function(x){
+	#  paste0("**", x, "**")
+		if(is.numeric(x)){
+		formatted <- format(x, digits=2, nsmall=2)
+		} else{
+		formatted <- x
+		}
+	}
+	knit_hooks$set(inline=inline_hook) 
+	
+snippet my_inline_hook_scientific
+	library(knitr)
+	inline_hook <- function(x){
+	#  paste0("**", x, "**")
+		if(is.numeric(x)){
+		formatted <- formatC(x, format="e", digits=2) #use formatC
+		} else{
+		formatted <- x
+		}
+		}
+
+knit_hooks$set(inline=inline_hook)
+	
+snippet my_libraries
+	library(DataExplorer)
+	library(skimr)
+	library(tidyverse)
+	library(stringr)
+	library(readr)  
+	library(janitor)
+	library(tidyr)  
+	library(pillar)  # is.ambiguous_string()  
+	library(unheadr)  # from luisDVA  
+	
+snippet my_postgres_connect
+	library(RODBC)
+	library(DBI)
+	library(odbc) 
+	con <- dbConnect(odbc::odbc(), "PostgreSQL35W") 
+	tracts <- dbGetQuery(con, 'SELECT * FROM public."tblLseTracts";')
+	odbcCloseAll()
+
+snippet my_parsed_nos 
+	parsed <- read_csv("F:/D_Documents/GitHub-DasRotRad/regex_rfortherest/data/MPAS-mine.csv") %>% 
+	mash_colnames(2) %>% 
+	clean_names() %>% 
+	select(protected_area_name, matches("^extent")) %>% 
+	remove_empty("rows") %>% 
+	mutate(across(matches("^extent"), parse_number))
+	
+snippet my_split_file
+	library(purrr, gapminder)
+	gapminder %>% 
+		split(.$country) %>% 
+		map(select, country, continent, year, lifeExp, pop, gdpPercap ) %>% 
+		iwalk(~ write_csv(.x, file.path("data_gap", paste0(.y, ".csv"))))
+		OR.. iwalk(~ write_csv(.x, paste0(.y, ".csv")))
+
+snippet my_clean_names
+	MPAs <- read_csv("./data/MPAS-mine.csv") %>% 
+	clean_names() %>% 
+	mutate(country = to_title_case(country)) %>% 
+	count(country) 
+	MPAs
+
+snippet my_math  
+	https://www.codecogs.com/latex/eqneditor.php?lang=en-en
+	
+snippet my_external_RMDfigures 
+	{r, fig.cap= "Figure 1. Illustration of penguin species", out.width='60%', fig.align = 'center', echo = FALSE}
+	knitr::include_graphics("https://allisonhorst.github.io/palmerpenguins/reference/figures/lter_penguins.png")
+
+snippet my_header_in_blue
+	{css, echo=FALSE}
+	/*header in blue*/
+	h1, h2, h3 {
+	color: #0A7FB2
+	}
+
+snippet myBinLik
+	BinLik <- function(theta){
+		choose(10,8)*theta^8*(1-theta)*2
+	}
+	integrate(BinLik, lower=0, upper=1)$value
+
+snippet my_ggplotRegression
+	library(tidyverse)
+	ggplotRegression <- function (fit) {
+		require(ggplot2)
+		ggplot(fit$model, aes_string(x = names(fit$model)[2], y = names(fit$model)[1])) + 
+		geom_point() +
+		stat_smooth(method = "lm", col = "red") +
+		labs(title = paste("Adj R2 = ",signif(summary(fit)$adj.r.squared, 5),
+										"Intercept =",signif(fit$coef[[1]],5 ),
+										" Slope =",signif(fit$coef[[2]], 5),
+										" P =",signif(summary(fit)$coef[2,4], 5)))
+} 
 
 snippet my_polynomial
 	plot(${1:myxcol}, ${2:myycol}, main="Polynomial Regression", las=1)
@@ -18,6 +591,30 @@ snippet my_polynomial
 	model3 <- lm(${2:myycol} ~ ${1:myxcol} + I(${1:myxcol^2) + I(${1:myxcol}^3), data=${3:mydf})
 	lines(smooth.spline(${1:myxcol}, predict(model3)), col="green", lwd=3, lty=3)
 	legend(46, 15, legend = c("model1: linear", "model2: poly x^2", "model3: poly x^3"), col=c("red", "blue", "green"), lty=c(1,1,3), lwd=3, bty="n", cex=0.9)
+
+snippet my_name_index_column
+	mtcars <- rownames_to_column(mtcars, var = "model")
+
+snippet my_access_db
+	library(RODBC)
+	MDBPATH <- "D:/D_Documents/_CheyenneCounty/NORSTAR/S Johnson Database/GTLS_SoJohnson Ver 1.0.accdb"
+	con <- odbcConnectAccess2007(MDBPATH)
+	lessors <- sqlFetch(con, 'tblLessors')
+	leases <- sqlFetch(con, 'tblLeases')
+	InstTypes <- sqlFetch(con, 'tblInstrTypes')
+	LseTracts <- sqlFetch(con, 'tblLseTracts')
+	mailMerge <- sqlFetch(con, '_MailMerge')
+	odbcClose(con)  
+	
+snippet my_currency
+	library(formattable)
+	mailmerge$BonusPmt <- currency(mailmerge$BonusPmt, digits = 2L)  
+	
+snippet my_external_file
+	```{r, code=xfun::read_utf8('your-script.R')}
+	``` 
+	```{r, code=read_files(c('one.R', 'two.R'))}
+	```
 
 snippet my_dateDiff
 	library(readxl)
@@ -60,7 +657,8 @@ snippet my_accross_newcol
 		data.table(.) %>% 
 		.[,myavg := mean(Sepal.Length), by=Species]
 
-
+snippet my_add_row
+	df[nrow(df) + 1,] = c("v1","v2")
 
 snippet my_validation
 	validation_approach <- function(dataset, proportion) {
@@ -135,7 +733,26 @@ snippet my_spdf_extents_plot
 	plot(usa, xlim=c(-100, -94.0), ylim=c(27, 50), col="orange")
 	
 snippet my_round  
-	sprintf(5.5, fmt = '%#.4f') 
+	sprintf(5.5, fmt = '%#.2f') %>% 
+	as.numeric()
+	format(round(mean(scores), digits = 2), nsmall = 2)
+	
+snippet my_inline_hook
+	# https://www.youtube.com/watch?v=a2MedFEQTeA 
+	knit_hook$set(inline=inline_hook)
+	inline_hook <- function(x){
+		if(is.numeric(x))
+		{
+			if(abs(x - round(x) < .Machine$double.eps)) {
+			# Treat as integer
+			formatted <- format(x, digits=0, big.mark = ",")
+		} else {
+		# Treat as Floating point number
+			formatted <- format(x, digits=2, nsmall=2, big.mark = ",")
+		} 
+		} else { formatted <- x
+			}
+		}
 	
 snippet my_shinyDates
 	server <- function(input, output) {
@@ -226,7 +843,8 @@ snippet my_case_when
 																!is.na(dt_prod) ~ 1))
 																
 snippet my_NA's
-${1:my_df} %>% 
+	wells1$PR <- ifelse(is.na(wells1$Dt_Prod), 0,1)
+	${1:my_df} %>% 
 	select(${2:my_var1}) %>% 
 	summarise(NA_per_row = sum(is.na(.)), Not_NA= sum(!is.na(.)))
 	
@@ -261,34 +879,34 @@ snippet my_custom_barchart	#
 	ggplot(${1:my_df}, aes(x=${2:myxcol}, y=${3:myycol})) + 
 	geom_col(color = "black", fill="#0072B2") +
 	theme_minimal() +
-	theme(panel.border = element_blank(), panel.grid.major = element_blank(),
-				panel.grid.minor = element_blank(), axis.line = element_line(colour = "gray"),
-				plot.title = element_text(hjust = 0.5),
-				plot.subtitle = element_text(hjust = 0.5)
-	) +
-	scale_y_continuous(label = comma) + 
-	xlab("") +
-	ylab("") +
-	geom_text(aes(label=scales::dollar(${2:myycol})), vjust=1.5, colour="white", position=position_dodge(.9), size=5) +
-	ggtitle("${4:mytitle}", subtitle = "${5:mysubtitle}") 
+	  theme(panel.border = element_blank(), panel.grid.major = element_blank(),
+	        panel.grid.minor = element_blank(), axis.line = element_line(colour = "gray"),
+	        plot.title = element_text(hjust = 0.5),
+	        plot.subtitle = element_text(hjust = 0.5)
+	  ) +
+	  scale_y_continuous(label = comma) + 
+	  xlab("") +
+	  ylab("") +
+	  geom_text(aes(label=scales::dollar(${2:myycol})), vjust=1.5, colour="white", position=position_dodge(.9), size=5) +
+	  ggtitle("${4:mytitle}", subtitle = "${5:mysubtitle}") 
 	
-snippet my_boxplot_outliers
+	snippet my_boxplot_outliers
 	dat <- ggplot2::${1:mydf}
 	summary(${2:myvar})
-		ggplot(${1:mydf}) +
-		aes(x=${2:myvar})+
-		geom_histogram(bins = 30L, fill = "#0c4c8a")+  # Bins ~ Square root of the no of obs.
-		theme_minimal()    
+	ggplot(${1:mydf}) +
+	  aes(x=${2:myvar})+
+	  geom_histogram(bins = 30L, fill = "#0c4c8a")+  # Bins ~ Square root of the no of obs.
+	  theme_minimal()    
 	ggplot(${1:mydf})+
-		aes(x="", y= ${2:myxvar})+
-		geom_boxplot(fill="#0c4c8a")+
-		theme_minimal()
+	  aes(x="", y= ${2:myxvar})+
+	  geom_boxplot(fill="#0c4c8a")+
+	  theme_minimal()
 	Extract_Outliers
-		out <- boxplot.stats(${2:myvar})$out
+	out <- boxplot.stats(${2:myvar})$out
 	Extract_Row_nos
-		out_ind <- which(${2:myvar} %in% c(out))
+	out_ind <- which(${2:myvar} %in% c(out))
 	boxplot(${2:myvar},
-		ylab="${3:myvarname},
+	        ylab="${3:myvarname},
 		main = "Boxplot of highway miles per gallon")
 		mtext(paste("Outliers: ", paste(out, collapse = ",")), side=1)
 	All observations that lie outside of 2.5 and 97.5 percentile are potential outliers.
@@ -379,281 +997,326 @@ snippet my_correllogram
 		}
 	p.mat <- cor.mtest(data, method = method)
 	col <- colorRampPalette(c("#BB4444", "#EE9988", "#FFFFFF", "#77AADD", "#4477AA"))
-	corrplot(mat,
-		method = "color", col = col(200), number.font = number.font,
-		mar = mar, number.cex = number.cex,
-			type = type, order = order,
-					addCoef.col = "black", # add correlation coefficient
-					tl.col = "black", tl.srt = tl.srt, # rotation of text labels
-			# combine with significance level
-		p.mat = p.mat, sig.level = sig.level, insig = "blank",
-			# hide correlation coefficiens on the diagonal
-			diag = diag
-		)
-	}
-			# Corrplot2
-		corrplot2(
-	data = ${1:mydf},
-	method = "pearson",
-	sig.level = 0.05,
-	order = "original",
-	diag = FALSE,
-	type = "upper",
-	tl.srt = 75
-	)
+corrplot(mat,
+         method = "color", col = col(200), number.font = number.font,
+         mar = mar, number.cex = number.cex,
+         type = type, order = order,
+         addCoef.col = "black", # add correlation coefficient
+         tl.col = "black", tl.srt = tl.srt, # rotation of text labels
+         # combine with significance level
+         p.mat = p.mat, sig.level = sig.level, insig = "blank",
+         # hide correlation coefficiens on the diagonal
+         diag = diag
+)
+}
+# Corrplot2
+corrplot2(
+  data = ${1:mydf},
+  method = "pearson",
+  sig.level = 0.05,
+  order = "original",
+  diag = FALSE,
+  type = "upper",
+  tl.srt = 75
+)
 
 
 snippet my_slice
-	${1:mydf} %>% slice_sample(n=5)
-	${1:mydf} %>% slice_min(${2:myvar}, prop=0.25)
-	${1:mydf} %>% slice_max(${2:myvar}, n=5)
+${1:mydf} %>% slice_sample(n=5)
+${1:mydf} %>% slice_min(${2:myvar}, prop=0.25)
+${1:mydf} %>% slice_max(${2:myvar}, n=5)
 
 snippet my_externalR
-	```{r setup, include=FALSE}
-	knitr::opts_chunk$set(echo=FALSE, 
-		warning=FALSE,
-		message=FALSE,
-		cache = FALSE,
-		include = TRUE,
-		# results = 'hide',
-		error = TRUE)
-	```
-	```{r, include=FALSE, cache=FALSE}
-			knitr::read_chunk('externalR.R')
-	```
-	```{r adelie-penguins}
-	```
-	## ---- adelie-penguins
-		adelie <- penguins %>%
-		filter(species=="Adelie", !is.na(body_mass_g))
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=FALSE, 
+                      warning=FALSE,
+                      message=FALSE,
+                      cache = FALSE,
+                      include = TRUE,
+                      # results = 'hide',
+                      error = TRUE)
+```
+```{r, include=FALSE, cache=FALSE}
+knitr::read_chunk('externalR.R')
+```
+```{r adelie-penguins}
+```
+## ---- adelie-penguins
+adelie <- penguins %>%
+  filter(species=="Adelie", !is.na(body_mass_g))
 
 
 snippet my_child
-	```{r, echo=FALSE, warning=FALSE,message=FALSE, cache = FALSE, include = TRUE}
-		library(tidyverse)
-		library(palmerpenguins)
-		# res <- knitr::knit_child('adelie-report.Rmd', quiet = FALSE)
-		# cat(res, sep = '\n')
-	```
-	# child-chunk
-	```{r test-main, child = 'adelie-report.Rmd', echo=FALSE} 
-			# https://yihui.org/knitr/demo/child/  
-	```  
-	
+```{r, echo=FALSE, warning=FALSE,message=FALSE, cache = FALSE, include = TRUE}
+library(tidyverse)
+library(palmerpenguins)
+# res <- knitr::knit_child('adelie-report.Rmd', quiet = FALSE)
+# cat(res, sep = '\n')
+```
+# child-chunk
+```{r test-main, child = 'adelie-report.Rmd', echo=FALSE} 
+# https://yihui.org/knitr/demo/child/  
+```  
+
 snippet my_case_when  
 ```{r,  echo=FALSE, warning=FALSE,message=FALSE, cache = FALSE, include = TRUE}
-	my_df %>%
-	mutate(quarter = case_when(
-		Month %in% c("Jan", "Feb", "Mar") ~ "Q1",
-		Month %in% c("Apr", "May", "Jun") ~ "Q2",
-		Month %in% c("Jul", "Aug", "Sep") ~ "Q3",
-		Month %in% c("Oct", "Nov", "Dec") ~ "Q4",
-		TRUE ~ "NA"
-		))
+my_df %>%
+  mutate(quarter = case_when(
+    Month %in% c("Jan", "Feb", "Mar") ~ "Q1",
+    Month %in% c("Apr", "May", "Jun") ~ "Q2",
+    Month %in% c("Jul", "Aug", "Sep") ~ "Q3",
+    Month %in% c("Oct", "Nov", "Dec") ~ "Q4",
+    TRUE ~ "NA"
+  ))
 ```
 snippet my_replace_values
-		${1:mydf}$	${2:my_var}[	${1:mydf}$	${2:my_var}=="	${3:my_value_old}"] <-"	${4:my_value_new}"
-			${1:mydf}$	${2:my_var}[	${1:mydf}$	${2:my_var} %in% c("${3:my_value_old}", "${4:my_value_old2}"] <-"	${5:my_value_new}"
+${1:mydf}$	${2:my_var}[	${1:mydf}$	${2:my_var}=="	${3:my_value_old}"] <-"	${4:my_value_new}"
+${1:mydf}$	${2:my_var}[	${1:mydf}$	${2:my_var} %in% c("${3:my_value_old}", "${4:my_value_old2}"] <-"	${5:my_value_new}"
 
 
 snippet my_annotate_vline
-	ggplot(data=${1:mydf}, aes(x=${2:myxcol}))+
-	geom_histogram(fill="skyblue", alpha=0.5, binwidth = 0.25) +
-	ggtitle("Count of Expiring Sections: Years to Expiration for 2,328 Section Prospect") +
-	geom_vline(aes(xintercept = median(${2:myxcol})), col="red", size=1) +
-	geom_vline(aes(xintercept = mean(${2:myxcol})), col="blue", size=1) +
-	theme_minimal() +
-	annotate("text", x = 4, y = 400,label= "Red = Median") +
-	annotate("text", x = 4, y = 500,label= "Blue = Mean")  
-	
+ggplot(data=${1:mydf}, aes(x=${2:myxcol}))+
+  geom_histogram(fill="skyblue", alpha=0.5, binwidth = 0.25) +
+  ggtitle("Count of Expiring Sections: Years to Expiration for 2,328 Section Prospect") +
+  geom_vline(aes(xintercept = median(${2:myxcol})), col="red", size=1) +
+  geom_vline(aes(xintercept = mean(${2:myxcol})), col="blue", size=1) +
+  theme_minimal() +
+  annotate("text", x = 4, y = 400,label= "Red = Median") +
+  annotate("text", x = 4, y = 500,label= "Blue = Mean")  
+
 snippet my_workbook  
-	library(openxlsx)
-	wb <- createWorkbook()
-	addWorksheet(wb, "Sheet1")
-	writeData(wb,"Sheet1", ${1:mydf})
-	saveWorkbook(wb, "./data/myworkbook.xlsx", overwrite=TRUE) 
-	
+library(openxlsx)
+wb <- createWorkbook()
+addWorksheet(wb, "Sheet1")
+writeData(wb,"Sheet1", ${1:mydf})
+saveWorkbook(wb, "./data/myworkbook.xlsx", overwrite=TRUE) 
+
 snippet my_kniter 
 ```{r setup, include=FALSE, echo=FALSE }
-	knitr::opts_chunk$set( 
-	echo = FALSE,
-	message = FALSE,
-	warning = FALSE) 
-	options(scipen=999)
-	if(!require("pacman")){
-		install.packages("pacman")
-	}
-	pacman::p_load(DT, dplyr, ggplot2, tmap, scales, leaflet)	
+knitr::opts_chunk$set( 
+  echo = FALSE,
+  message = FALSE,
+  warning = FALSE) 
+options(scipen=999)
+if(!require("pacman")){
+  install.packages("pacman")
+}
+pacman::p_load(DT, dplyr, ggplot2, tmap, scales, leaflet)	
 ```
 
 
 snippet my_citation_yaml
 ---
-title: "What is R?"
+  title: "What is R?"
 author: 
-output:
-	html_document:
-	df_print: paged
-	pdf_document: default
+  output:
+  html_document:
+  df_print: paged
+pdf_document: default
 bibliography: "../MyLibrary.bib"
 Link-citation: true
 
 ---
+  
+  
+  snippet my_round
+${1:mydf} %>%
+  mutate_at(vars(c(${2:myvar1},${3:myvar2}, ${4:myvar3}, ${5:myvar4})), round, 2)  
 
-
-snippet my_round
-	${1:mydf} %>%
-		mutate_at(vars(c(${2:myvar1},${3:myvar2}, ${4:myvar3}, ${5:myvar4})), round, 2)  
-		
 snippet my_gttable
 library(gt)
 library(tidyverse)
 library(glue)
-	gt_tbl <- gt_tbl %>%
-		tab_header(
-		title = md("**Summary of Landman Acquisitions**"),
-		subtitle = md("*RoyAc = Sum of NetAc * NRI*")
-	) %>%
-		data_color(
-		columns = vars(Avg_Royalty),
-		colors = scales::col_numeric(
-			palette = c(
-			"lightgreen", "red"),
-			domain = c(NULL))
-	)
-	# Show the gt Table
-	gt_tbl
-	
+gt_tbl <- gt_tbl %>%
+  tab_header(
+    title = md("**Summary of Landman Acquisitions**"),
+    subtitle = md("*RoyAc = Sum of NetAc * NRI*")
+  ) %>%
+  data_color(
+    columns = vars(Avg_Royalty),
+    colors = scales::col_numeric(
+      palette = c(
+        "lightgreen", "red"),
+      domain = c(NULL))
+  )
+# Show the gt Table
+gt_tbl
+
 snippet my_treemap
-	library(treemapify)
-	ggplot(df_roy, aes(area = TotalRoyAc,
-					fill = initials,
-					label = TotalRoyAc,
-					subgroup = initials)) +
-		geom_treemap() +
-		geom_treemap_subgroup_border() +
-		geom_treemap_subgroup_text(place = "centre",
-								grow = F,
-								alpha = 0.5,
-								colour = "black",
-								fontface = "italic",
-								min.size = 0) +
-		geom_treemap_text(colour = "white", place = "topleft", reflow = T) +
-				labs(y = " ",
-				x = NULL,
-				title = "Who is Contributing the Greatest Number of Royalty Acres?",
-				subtitle = "Royalty Acres = Sum of Roy Acres * NRI")
+library(treemapify)
+ggplot(df_roy, aes(area = TotalRoyAc,
+                   fill = initials,
+                   label = TotalRoyAc,
+                   subgroup = initials)) +
+  geom_treemap() +
+  geom_treemap_subgroup_border() +
+  geom_treemap_subgroup_text(place = "centre",
+                             grow = F,
+                             alpha = 0.5,
+                             colour = "black",
+                             fontface = "italic",
+                             min.size = 0) +
+  geom_treemap_text(colour = "white", place = "topleft", reflow = T) +
+  labs(y = " ",
+       x = NULL,
+       title = "Who is Contributing the Greatest Number of Royalty Acres?",
+       subtitle = "Royalty Acres = Sum of Roy Acres * NRI")
 
 
 snippet lib
-	library(${1:package})
+library(${1:package})
 
 snippet req
-	require(${1:package})
+require(${1:package})
 
 snippet src
-	source("${1:file.R}")
+source("${1:file.R}")
 
 snippet ret
-	return(${1:code})
+return(${1:code})
 
 snippet mat
-	matrix(${1:data}, nrow = ${2:rows}, ncol = ${3:cols})
+matrix(${1:data}, nrow = ${2:rows}, ncol = ${3:cols})
 
 snippet sg
-	setGeneric("${1:generic}", function(${2:x, ...}) {
-		standardGeneric("${1:generic}")
-	})
+setGeneric("${1:generic}", function(${2:x, ...}) {
+  standardGeneric("${1:generic}")
+})
 
 snippet sm
-	setMethod("${1:generic}", ${2:class}, function(${2:x, ...}) {
-		${0}
-	})
+setMethod("${1:generic}", ${2:class}, function(${2:x, ...}) {
+  ${0}
+})
 
 snippet sc
-	setClass("${1:Class}", slots = c(${2:name = "type"}))
+setClass("${1:Class}", slots = c(${2:name = "type"}))
 
 snippet if
-	if (${1:condition}) {
-		${0}
-	}
+if (${1:condition}) {
+  ${0}
+}
 
 snippet el
-	else {
-		${0}
-	}
+else {
+  ${0}
+}
 
 snippet ei
-	else if (${1:condition}) {
-		${0}
-	}
+else if (${1:condition}) {
+  ${0}
+}
 
 snippet fun
-	${1:name} <- function(${2:variables}) {
-		${0}
-	}
+${1:name} <- function(${2:variables}) {
+  ${0}
+}
 
 snippet for
-	for (${1:variable} in ${2:vector}) {
-		${0}
-	}
+for (${1:variable} in ${2:vector}) {
+  ${0}
+}
 
 snippet while
-	while (${1:condition}) {
-		${0}
-	}
+while (${1:condition}) {
+  ${0}
+}
 
 snippet switch
-	switch (${1:object},
-		${2:case} = ${3:action}
-	)
+switch (${1:object},
+        ${2:case} = ${3:action}
+)
 
 snippet apply
-	apply(${1:array}, ${2:margin}, ${3:...})
+apply(${1:array}, ${2:margin}, ${3:...})
 
 snippet lapply
-	lapply(${1:list}, ${2:function})
+lapply(${1:list}, ${2:function})
 
 snippet sapply
-	sapply(${1:list}, ${2:function})
+sapply(${1:list}, ${2:function})
 
 snippet mapply
-	mapply(${1:function}, ${2:...})
+mapply(${1:function}, ${2:...})
 
 snippet tapply
-	tapply(${1:vector}, ${2:index}, ${3:function})
+tapply(${1:vector}, ${2:index}, ${3:function})
 
 snippet vapply
-	vapply(${1:list}, ${2:function}, FUN.VALUE = ${3:type}, ${4:...})
+vapply(${1:list}, ${2:function}, FUN.VALUE = ${3:type}, ${4:...})
 
 snippet rapply
-	rapply(${1:list}, ${2:function})
+rapply(${1:list}, ${2:function})
 
 snippet ts
-	`r paste("#", date(), "------------------------------\n")`
+`r paste("#", date(), "------------------------------\n")`
 
 snippet shinyapp
-	library(shiny)
-	
-	ui <- fluidPage(
-	  ${0}
-	)
-	
-	server <- function(input, output, session) {
-	  
-	}
-	
-	shinyApp(ui, server)
+library(shiny)
+
+ui <- fluidPage(
+  ${0}
+)
+
+server <- function(input, output, session) {
+  
+}
+
+shinyApp(ui, server)
 
 snippet shinymod
-	${1:name}_UI <- function(id) {
-	  ns <- NS(id)
-	  tagList(
-		${0}
-	  )
-	}
-	
-	${1:name} <- function(input, output, session) {
-	  
-	}
+${1:name}_UI <- function(id) {
+  ns <- NS(id)
+  tagList(
+    ${0}
+  )
+}
 
+${1:name} <- function(input, output, session) {
+  
+}
+
+snippet my_ggplot-facet-dollars  
+# reproduce plot for each level of job sector
+ggplot(plotdata, aes(x = exper, y = wage, color = sex)) +
+  geom_point(alpha = .7, size = 1) +
+  geom_smooth(method = "lm", size = 1, se = FALSE) +
+  scale_x_continuous(breaks = seq(0, 60, 10)) +
+  scale_y_continuous(breaks = seq(0, 30, 5), label = scales::dollar) +
+  scale_color_manual(values = c("indianred3", "cornflowerblue")) +
+  facet_wrap(~sector)
+
+snippet my_ggplot-reorder  
+ggplot(plotdata, 
+       aes(x = reorder(race, -N), y=N)) + 
+  geom_bar(stat = "identity", 
+           fill = "cornflowerblue", 
+           color="black") +
+  labs(x = "Race", 
+       y = "Frequency", 
+       title = "Participants by race") 
+
+snippet my_ggplot-percentages
+# plot percents  ADD THE PERCENTAGES
+plotdata$prop <- plotdata$N / sum(plotdata$N)
+ggplot(plotdata, aes(x = race, y = prop)) + 
+  geom_bar(stat = "identity", 
+           fill = "cornflowerblue", 
+           color="black") +
+  scale_y_continuous(label = scales::percent) +
+  labs(x = "Race", 
+       y = "Percent", 
+       title = "Participants by race") 
+
+snippet my_ggplot-histogram-percentages 
+# plot the histogram with percentages on the y-axis
+library(scales)
+ggplot(Marriage, 
+       aes(x = age, 
+           y= ..count.. / sum(..count..))) +
+  geom_histogram(fill = "cornflowerblue", 
+                 color = "white", 
+                 bins = 20) + 
+  labs(title="Participants by age", 
+       y = "Percent",
+       x = "Age") +
+  scale_y_continuous(labels = percent)
