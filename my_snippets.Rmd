@@ -6,26 +6,498 @@ output: html_document
 ---
 
 
+snippet my_quarto_yaml
+	title: "Mapview - Density"
+	format: html
+	editor: visual
+	author: "Robert Cline"
+	format: html
+	editor: visual
+	toc: true
+	code-fold: true
+	execute:
+		message: false
+		include: true
+		warning: false  
+		
+snippet my_postgres_con
+	library(postGIStools)
+	library(RPostgres)
+	library(RPostgreSQL) 
+	my_dbname1 = "movie_database"
+	my_dbname2 = "tg3b"
+	my_dbname3 = "huntsman"
+	my_dbname4 = "postgres"
+	pg_connection <- dbConnect(
+		drv = Postgres(),
+		host = 'localhost',
+		port = 5432,
+		user = "postgres",
+		password = "5232",
+		# dbname = Sys.getenv("POSTGRES_DB")
+		dbname = my_dbname3
+		)
+	dbListTables(pg_connection)
+		
+snippet my_quarto_yaml2
+	format: 
+		html:
+			code-fold: true
+			html-math-method: katex
+	pdf:
+		geometry: 
+			- top=30mm
+			- left=30mm
+	docx: default  
+	
+snippet my_rep 
+	tg %>% 
+		select(PARCEL_ID, CURRENT_OW) %>% 
+		filter(PARCEL_ID == "170008207") %>% 
+		slice(rep(1:n(), each=3)) 
+		mutate(PARCEL_ID = str_replace(PARCEL_ID, "170008207", "170008207M")) %>% 
+		mutate(CURRENT_OW == "FRACIE/Gracie", "John Doe") 
+		
+snippet my_clipboard  
+	library(tidyverse)    
+	copied.data <- read.table(file = "clipboard", header = TRUE, sep= "\t")
+	df <- tibble(copied.data)
+	
+snippet my_datediff  
+	mutate(days = difftime(date.start, date.end, units = "days"))
+
+snippet my_code_chunk_external_code
+	{r, code = readLines("permits-signed.R"), echo=FALSE, comment=NA, message=FALSE}
+	{r exit-knitr-true, eval=TRUE}
+		knitr::knit_exit()  
+		
+snippet my_recode # E:/evertson 
+	# https://dplyr.tidyverse.org/reference/recode.html
+	smith1 %>%
+		mutate(county = API_County) %>% 
+		mutate_at(c("county"), #"API_County"),
+			funs(recode(.,
+			"121" = "Washington",
+			"123" = "Weld",
+			"125" = "Yuma"
+			)))  
+			
+snippet my_freq_table
+	janitor::tabyl(smith2$county)
+	
+snippet my_data_summary_table
+	data_summary <- data.frame(unclass(summary(df)),
+		check.names = FALSE) 
+	data_summary %>% 
+		gt::gt()
+
+snippet my_ssns_dplyr
+	library(tidyverse)
+	dat <- tibble::tribble(
+	~id,       ~ssn,     ~phone,
+	1L, 123803838L, 5555555555,
+	2L, 324555423L, 8133055022,
+	3L, 525307008L, 1234567777,
+	4L, 726058593L, 9999999999,
+	5L, 926810178L, 9399399393
+	) %>% #example data
+	mutate(ssn_format = str_c(str_sub(ssn, 1L, 3L), "-", str_sub(ssn, 4L, 5L), 
+		"-", str_sub(ssn,6L,9L)), 
+		phone_format = paste0("(", str_sub(phone, 1L, 3L), ") ",
+															str_sub(phone, 4L, 6L)," ", str_sub(phone, 7L, 10L)))
+															
+snippet my_regex_ssns
+	library(dplyr)
+	require(stringi)
+	dat <- tibble::tribble(
+		~id, ~ssn, ~phone,
+		1L, 123803838L, 5555555555,
+		2L, 324555423L, 8133055022,
+		3L, 525307008L, 1234567777,
+		4L, 726058593L, 9999999999,
+		5L, 926810178L, 9399399393
+		) %>%
+		mutate(
+		ssn_format = stri_replace_all_regex(
+		ssn,
+			"^(\\d{3})(\\d{2})(\\d{4})$",
+			"$1-$2-$3"
+		),
+		phone_format = stri_replace_all_regex(
+		phone,
+		"^(\\d{3})(\\d{3})(\\d{4})$",
+		"($1) $2 $3"
+		)
+		)
+	
+snippet my_underline
+	[Underline this]{.underline}.
+	
+snippet my_css 
+	.test h3 {text-align: center;}
+	### Exhibit A {.test}
+		
+snippet my_compare_df
+	dplyr::all_equal()  
+	janitor::compare_df_cols(iris, iris)
+	janitor::compare_df_cols(iris, iris, return = "mismatch")
+	visdat::vis_compare(iris, iris_wrong_class)
+	vis_dat()
+	vis_miss()
+	vis_miss(aoi, cluster = TRUE)
+	vis_compare(x, y) 
+	
+snippet my_adorn_percentages 
+	nhanes %>% 
+	tabyl(age_decade, gender) %>% 
+	adorn_percentages() %>% 
+	adorn_pct_formatting(digits = 0,
+												rounding = "half up") %>% 
+	kbl(caption = "adorn_percentages") %>% 
+	kable_classic(full_width = F, html_font = "Cambria", position = "left") 
+	
+snippet my_gt_table
+	gt() %>% 
+		tab_header(
+		title = md("**Permits Sent and Received**"))   %>%
+		fmt_number(
+			data=.,
+			columns = GrossAc,
+			decimals = 2,
+			use_seps = TRUE
+		) %>% 
+	tab_footnote(
+		footnote = "Percent of total number of permits",
+		locations = cells_column_labels(
+		columns = percent_N
+		)
+		) %>% 
+	tab_footnote(
+		footnote = "n = number of permits",
+		locations = cells_column_labels(
+		columns = n
+		)
+	)%>% 
+	grand_summary_rows(
+		columns = c(GrossAc, n),
+		fns = list(
+		#  Total = ~sum(.),
+		#  max = ~max(.),
+			Total = ~sum(.)),
+		formatter = fmt_number,
+			use_seps = TRUE
+			) %>%
+		tab_options(table.align='left') 
+		
+snippet my_gt_table_summary_rows
+	df %>%
+		group_by(Tract) %>%
+		gt() %>%
+			summary_rows(
+			groups = TRUE,
+			columns = c(NRI,"Total WI"),
+			fns = list(Total = "sum"),
+			decimals = 10
+	)
+
+snippet my_merge_and_sequence
+	ID <- c(1,1,1,2,2,3,3,3)
+	score <- c(3,7,1,1,2,4,2,9)
+	df <- data.frame(ID, score)
+	library(tidyverse)
+	df1 <- df %>%
+		group_by(ID) %>%
+		summarize(score = sum(score))
+	df2 <- df1 %>%
+		mutate(sequence = rep(c(1,2), times = ceiling(nrow(df1)/2))[1:nrow(df1)])
+	df3 <- merge(x = df, y = df2, by = "ID", all.x = TRUE)
+
+
+snippet my_regex
+	## Remove (Card ##)
+	ckall$legal <- str_replace(ckall$legal, " \\s*\\([^\\)]+\\)", "")
+		
+snippet my_string_split
+	separate(tg_seis0, LEGAL_DESC, into = c("trs", "legal"), sep = "^\\S*\\K\\s+") 
+	
+snippet my_duplicates_spatial 
+	library(janitor)
+	get_dupes(x, PARCEL_ID)
+	x1 <- x[!duplicated(x$PARCEL_ID),]
+	x2 <- bcmaps::fix_geo_problems(x, tries = 5)
+		
+snippet my_image 
+	<img src="images/gtlslogo-03.png" style="width:50%;"/>
+	![My Original image.](images/gtlslogo-03.png){width=300}
+	![A little image.](images/gtlslogo-03.png){width=50} 
+	
+snippet my_arrow
+	read_csv_arrow(here("data/aoi_RZ_updatedSEQUENCE.csv"))
+	write_csv_arrow(aoi1, "data/aoi_RZ_updatedSEQUENCE.csv"))
+		
+snippet my_mapview 
+	library(mapview)
+	library(sf)
+	franconia %>% 
+		mutate(count = length(st_contains(., breweries)),
+			density = count/st_area(.)) %>% 
+	mapview(zcol = "density", legend = FALSE) 
+	
+snippet my_geom_sf
+	mintracts %>% 
+	select(acres) %>% 
+	ggplot() + 
+	geom_sf() +
+	theme_minimal() +
+	ggtitle("Huntsman Mineral Tracts")  +
+	scale_x_continuous(breaks = seq(from = -103.04, to = -102.92, by = 0.03))
+
+snippet my_ifelse
+	leases0 %>% 
+		filter(!is.na(NetAc)) %>% 
+		filter(!is.na(GrossAc)) %>% 
+		mutate(TotalBonus = if_else(
+		condition = NetAc == 0,
+			true = GrossAc* SeismicBonusPerAc,
+			false = NetAc * SeismicBonusPerAc))
+	leases1 <-   leases1 %>% 
+		mutate(TotalBonus = round(TotalBonus, 2))
+
 snippet my_setwd
 	library("rstudioapi") 
 	setwd(dirname(getActiveDocumentContext()$path))
 	mypath <- getwd()
-	source(paste(mypath, "bayes_set_seed.R", sep="/"))  
+	source(paste(mypath, "bayes_set_seed.R", sep="/")) 
+	
+snippet my_boxplot_w_statbars 
+	data <- data.frame(
+		values = rnorm(100),
+		groups = letters[1:4])
+	head(data)
+	ggplot(data, aes(values, group = groups)) +
+	stat_boxplot(geom = "errorbar") +
+	geom_boxplot()
+	
+snippet my_baseplot 
+	plot(st_geometry(tgseis0)) #, col=alpha("#6d558", 0.3))
+	plot(st_geometry(tgpids0), add=TRUE, col = "#b01225")
+
+	
+snippet my_graphic_chunk
+	```{r echo=FALSE, out.width='25%'}
+	knitr::include_graphics(here('img/EuropeanShag.PNG'))
+	```  
+
+snippet my_source_script
+	source("../scripts/theme.clean.R", local = knitr::knit_global())
+	# or sys.source("your-script.R", envir = knitr::knit_global())
+
+snippet my_download_data
+	dataset_penguins <- function() {
+		file <- here::here("data/penguins.csv")
+		if (!file.exists(file)) {
+		download_penguins()
+		} 
+	return(read.csv(file))
+	}
+	# penguins <- read.csv(download_penguins()) # put in separate chunk 
+	
+snippet my_downloader_zipped_files 
+	library(downloader)
+	# Example:  download(url, dest="dataset.zip", mode="wb") 
+	download(url='http://www.nogcc.ne.gov/Publications/NE_TWP.zip', dest="NE_TWP.zip", mode="wb") 
+	unzip ("NE_TWP.zip", exdir = "./downloaddata")
+	# URL2: 
+	download(url='http://www.nogcc.ne.gov/Publications/NE_SECTION.zip', dest="NE_SECTION.zip", mode="wb") 
+	unzip ("NE_SECTION.zip", exdir = "./downloaddata")
+	
+snippet my_tables_summaryJtools 
+	library(jtools)
+	# https://cran.r-project.org/web/packages/jtools/vignettes/summ.html
+	summ(mountain.lm)
+	summ(mountain.lm, confint = TRUE, ci.width = 0.5)
+	export_summs(mountain.lm)
+	plot_summs(mountain.lm)
+	plot_summs(mountain.lm, scale=TRUE)
+	
+snippet my_download_files
+	download_file <- function() {
+		file <- here::here("./data/gt_example.csv")
+		url <- "https://zenodo.org/record/6363516#.YkIoy-fMJaS"
+		if (!file.exists(file)) {
+			download.file(url = url,
+			destfile = file)
+		}
+	}
+	myfile <- read.csv()download_file())
+	
+snippet my_download_google
+	library(googledrive)
+	drive_auth()
+	gdrive <-drive_find(n_max = 10) 
+	gdrive
+	drive_download("penguins.csv")
+
+	 
+snippet my_fetch_accessTables
+	dbpath <- "F:/D_Documents/_Pecos_solutions/new_mexico/New_Mexico-AllWells.mdb"
+	fetch <- function(x) {
+		ch0<- RODBC::odbcDriverConnect(paste0("Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=",dbpath ))
+		allwells <- RODBC::sqlFetch(ch0, "AllWells")
+		allwells <<- allwells
+	RODBC::odbcClose(ch0)
+	}
+	fetch(allwells)  
+	
+snippet my_access_connect 
+	library(odbc)
+	library(RODBC)
+	unique(odbcListDrivers()[[1]])
+	# MDBPATH <-"E:\tallgrass\data\Tallgrass-ver1.0.accdb"
+	# MDBPATH <- "D:/D_Documents/_CheyenneCounty/NORSTAR/S Johnson Database/GTLS_SoJohnson Ver 1.0.accdb"
+	MDBPATH <- "F:/D_Documents/_Power_BI/Leviathan_PBI/Archive/Leviathan Data - Copy.accdb"
+	con <- odbcDriverConnect(paste0("Driver={Microsoft Access Driver (*.mdb, *.accdb)}; DBQ=", MDBPATH,";"))
+	leases <- sqlFetch(con, 'tblLeases')
+	lessors <- sqlFetch(con, 'tblLessors')
+	InstTypes <- sqlFetch(con, 'tblInstrTypes')
+	LseTracts <- sqlFetch(con, 'tblLseTracts')
+	# mailMerge <- sqlFetch(con, '_MailMerge')
+	counties <- sqlFetch(con, 'tblCounties')
+	odbcClose(con) 
+
+snippet my_wells 
+	dbpath <- "E:/tallgrass/data/NebraskaWellData_Paleozoic_Working.accdb"
+	ch0<- RODBC::odbcDriverConnect(paste0("Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=",dbpath ))
+	welldata0 <- RODBC::sqlFetch(ch0, "tblNebraskaWellData")
+	tops <- RODBC::sqlFetch(ch0, "tblNebraskaWellData_Tops")
+	legend <- RODBC::sqlFetch(ch0, "tbl_Legend")
+	# welltype <- RODBC::sqlFetch(ch0, "Well_Type")
+	statuscode <- RODBC::sqlFetch(ch0, "Well_Status_Codes")
+	fmtn <- RODBC::sqlFetch(ch0, "tbl_Fmtn")
+	statustype <- RODBC::sqlFetch(ch0, "tbl_Status_Type")
+	welltype <- RODBC::sqlFetch(ch0, "Well_Type")
+	RODBC::odbcClose(ch0)
+	welldata <- welldata0 %>% 
+	janitor::clean_names() %>% 
+		rename(api = api_well_no) %>% 
+		rename(status = wl_status) %>% 
+		rename(twp = wh_twpn) %>% 
+		rename(rng = wh_rng_n) %>% 
+		rename(lat = wh_lat) %>% 
+		rename(lon = wh_long) %>% 
+		rename(sec = wh_sec)
+	wells <- welldata %>% 
+		select(api, county, co_name, well_nm, well_typ, status, twp, rng, sec, dt_spud, dt_prod, dt_pa, lease_name, field, lat, lon) %>% 
+		# Add grepl grep-logical 
+		filter(grepl('tallgrass', as.factor(co_name), ignore.case = TRUE)) %>% 
+		filter(well_typ != "SWD") %>% 
+		unite(trs, c(twp, rng, sec), sep = "-")
+
+	
+snippet my_pdf_yaml 
+	output:
+		pdf_document: default
+		html_document: default
+	documentclass: article
+	classoption: legalpaper
+	usepackage: geometry
+	#See Template: E/latex-arxiv.Rmd
+
+	
+snippet my_sys_date 
+	add quote and backtic r format(Sys.time(), '%B %d, %Y')`"  
+	
+snippet my_equation_editor  
+	"https://www.codecogs.com/latex/eqneditor.php"
+
+snippet my_cran
+	https://cran.rstudio.com/web/views/
+	library(dplyr)library(stringr)
+	# download package details ------------------------------------------------
+	p_db <- tools::CRAN_package_db()
+	# select variables of interest -------------------------------------------
+	p_db <- p_db %>% select(Package, Author, Description, Title)
+	devtools::session_info()  
+	
+snippet my_setup_chunk  
+	# date: "`r format(Sys.time(), '%B %d, %Y')`" 
+	{r setup, include=FALSE, warning=FALSE, message=FALSE}  
+	knitr::opts_chunk$set(echo = FALSE)  
+	library(rmarkdown)  
+	suppressPackageStartupMessages({  
+		library(tidyverse)  
+		library(rvest)  
+		library(plotly)  
+		library(kableExtra)  
+		library(knitr)
+	})
+	
+snippet my_kable_table 
+	library(kableExtra)
+	head(trees) %>% 
+	kbl(caption = "trees dataset") %>% 
+	kable_classic(full_width = F, html_font = "Cambria", position = "left") 
+	summary(trees)  %>% 
+		kbl(caption = "trees dataset") %>% 
+		kable_classic(full_width = F, html_font = "Cambria", position = "left")
+
+	
+snippet my_package
+	ls(package:ggstatsplot)  
+	help(package="ggstatsplot")  
+	browseVignettes("ggstatsplot")  
+	lsf.str("package:ggstatsplot")  
+snippet my_table 
+	library(kableExtra)
+	table(titanic$class, titanic$survived) %>% 
+	kbl(caption = "Titanic - Passenger class and survival") %>% 
+	kable_classic(full_width = F, html_font = "Cambria", position = "left")  
+	
+snippet my_binomial_glm  
+	tit.glm <- glm(Survivied ~ Class,
+		data = titanic,
+		family = binomial) 
+	library("modelbased")
+		estimate_means(tit.glm) %>% 
+	kbl(caption = "Titanic - Passenger class and survival probabilities") %>% 
+	kable_classic(full_width = F, html_font = "Cambria", position = "left") 
+	
+snippet my_logit
+	boot::logit(0.7318443)
+	boot::inv.logit(1.004)
+	
+snippet my_mosaic_plot 
+	plot(factor(survived) ~ factor(class), data = titanic)
+	
+snippet my_bayesplot_ppcheck 
+	bayesplot::pp_check(tit.glm)
+	
+snippet my_citation_grateful
+	 	`r grateful::cite_packaes(style = "apa")
+	
+snippet my_stringr 
+	library(stringr)
+	df_pvt2 <- df_pvt %>% 
+	filter(str_detect(string=year, pattern = "x")) %>% 
+	mutate(year=str_replace(year,"x",""))
 	
 snippet my_pivot_long  
+	library(tidyr)
 	mtcars_long <- pivot_longer(mtcars,
 		cols = !Model:mpg,
 		names_to = "desired name for category column",
 		values_to = "desired name for values column")  
 		
-snippet my_pivot_long2
+snippet my_pivot_long2  
+	library(tidyr)
 	pivot_longer(${1:mydf}},
 		cols=${2:columns to pivot long},
 		names_to = "${3:desired name for category column}",
 		values_to = "${4:desired name for value column}"
 		) 
 		
-snippet my_pivot_wider
+snippet my_pivot_wider  
+	library(tidyr)  
 	pivot_wider(us_rent_income,
 		# id_cols = optional vector of unaffected cols,
 		names_from = c(variable),
@@ -34,11 +506,28 @@ snippet my_pivot_wider
 	)  
 	
 snippet my_pivot_wider2  
+	library(tidyr)  
 	pivot_wider(${1:mydf},
 		#id_cols = ${2:optional vector of unaffected cols},
 		names_from = c(${3:category columns to pivot wide}),
 		values_from = c(${4:value columns that hold data for ea category col}),
-		names_sep= "_")
+		names_sep= "_") 
+		
+snippet my_render  
+	## Compiling Reports from R Scripts 
+	## https://rmarkdown.rstudio.com/articles_report_from_r_script.html
+	rmarkdown::render(here::here("docs_descriptive", "2_frequency_tables.Rmd"))
+
+snippet my_lm_summaryTable  
+	# fitlignite <- lm(co2 ~ MW, data=lignite)
+	sjPlot::tab_model(
+		fitlignite,
+		show.r2 = TRUE,
+		show.icc = FALSE,
+		show.re.var = FALSE,
+		p.style = "scientific",
+		emph.p = TRUE) #, include to save as html
+		# file = "Downloads/temp.html")
 		
 snippet my_params_{gt}_titles
 	options(digits = 3)
@@ -235,7 +724,8 @@ snippet my_accross_newcol
 		data.table(.) %>% 
 		.[,myavg := mean(Sepal.Length), by=Species]
 
-
+snippet my_add_row
+	df[nrow(df) + 1,] = c("v1","v2")
 
 snippet my_validation
 	validation_approach <- function(dataset, proportion) {
@@ -310,7 +800,9 @@ snippet my_spdf_extents_plot
 	plot(usa, xlim=c(-100, -94.0), ylim=c(27, 50), col="orange")
 	
 snippet my_round  
-	sprintf(5.5, fmt = '%#.4f')  
+	sprintf(5.5, fmt = '%#.2f') %>% 
+	as.numeric()
+	format(round(mean(scores), digits = 2), nsmall = 2)
 	
 snippet my_inline_hook
 	# https://www.youtube.com/watch?v=a2MedFEQTeA 
@@ -850,3 +1342,48 @@ snippet shinymod
 	  
 	}
 
+snippet my_ggplot-facet-dollars  
+# reproduce plot for each level of job sector
+	ggplot(plotdata, aes(x = exper, y = wage, color = sex)) +
+		geom_point(alpha = .7, size = 1) +
+		geom_smooth(method = "lm", size = 1, se = FALSE) +
+		scale_x_continuous(breaks = seq(0, 60, 10)) +
+		scale_y_continuous(breaks = seq(0, 30, 5), label = scales::dollar) +
+		scale_color_manual(values = c("indianred3", "cornflowerblue")) +
+		facet_wrap(~sector)
+		
+snippet my_ggplot-reorder  
+	ggplot(plotdata, 
+		aes(x = reorder(race, -N), y=N)) + 
+		geom_bar(stat = "identity", 
+			fill = "cornflowerblue", 
+			color="black") +
+			labs(x = "Race", 
+				y = "Frequency", 
+				title = "Participants by race") 
+				
+snippet my_ggplot-percentages
+	# plot percents  ADD THE PERCENTAGES
+		plotdata$prop <- plotdata$N / sum(plotdata$N)
+		ggplot(plotdata, aes(x = race, y = prop)) + 
+		geom_bar(stat = "identity", 
+				fill = "cornflowerblue", 
+				color="black") +
+			scale_y_continuous(label = scales::percent) +
+			labs(x = "Race", 
+				y = "Percent", 
+				title = "Participants by race") 
+				
+snippet my_ggplot-histogram-percentages 
+# plot the histogram with percentages on the y-axis
+	library(scales)
+	ggplot(Marriage, 
+			aes(x = age, 
+			y= ..count.. / sum(..count..))) +
+	geom_histogram(fill = "cornflowerblue", 
+									color = "white", 
+									bins = 20) + 
+	labs(title="Participants by age", 
+				y = "Percent",
+				x = "Age") +
+		scale_y_continuous(labels = percent)
